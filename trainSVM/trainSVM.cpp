@@ -24,7 +24,10 @@ void LabelData(const ::std::vector<::std::string>& listOfFiles, cv::Mat& labels)
 void FeatureExtraction(const ::std::vector<::std::string>& listOfFiles, ::Eigen::MatrixXd& featureMatrix);
 void FeatureExtraction(const ::std::vector<::std::string>& listOfFiles, ::cv::Mat& featureMatrix);
 
-::std::string path = "C:\\Users\\CH182482\\Documents\\Data\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-14-40\\";
+//::std::string path = "C:\\Users\\CH182482\\Documents\\Data\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-14-40\\";
+//::std::string searchpath = path + "*.png";
+
+::std::string path = "C:\\Users\\RC\\Dropbox\\Boston\\BCH\\surgery\\2016-05-26_14-14-40\\";
 ::std::string searchpath = path + "*.png";
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -33,7 +36,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	::std::vector<::std::string> listOfFiles;
 	LoadTrainingData(listOfFiles);
 	::std::cout << "Loaded " << listOfFiles.size() << " files!!" << ::std::endl;
-
+	 
 	// feature extraction
 	//int numOfFeatures = 1;
 	//::Eigen::MatrixXd featureMatrix(listOfFiles.size(), numOfFeatures);
@@ -42,8 +45,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	int numOfFeatures = 1;	
 	::cv::Mat featureMatrix(listOfFiles.size(), numOfFeatures, CV_32F);
 	FeatureExtraction(listOfFiles, featureMatrix);
-
-
 
 	// label data
 	cv::Mat labelsMat;
