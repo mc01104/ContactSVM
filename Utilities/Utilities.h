@@ -148,3 +148,26 @@ void SO3ToEigen(const SO3& rot, ::Eigen::Matrix<double, 3, 3>& rotEigen);
 void PrintVec3(const Vec3& vecToPrint);
 
 std::wstring s2ws(const std::string& s);
+
+
+
+// Useful functions for sorting files by increasing number and not lexicographical order
+// usage with a vector of strings: 
+// std::sort(vector.begin(), vector.end(), numeric_string_compare);
+bool is_not_digit(char c);
+bool numeric_string_compare(const std::string& s1, const std::string& s2);
+
+
+
+/*
+Command line options parsing utility
+
+Usage: 
+	If the program i caled program.exe -h for instance, cmdOptionExists(argv, argv+argc, "-h") will return true
+
+	For options with a value (for instance program.exe -i path_of_file), getCmdOption(argv, argv + argc, "-i") will return a char* with the value, that can be cast into the type needed later on
+
+*/
+char* getCmdOption(char ** begin, char ** end, const std::string & option);
+bool cmdOptionExists(char** begin, char** end, const std::string& option);
+
