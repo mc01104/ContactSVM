@@ -6,7 +6,7 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
-#include "opencv2/imgcodecs.hpp"
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/ml.hpp>
 
@@ -14,6 +14,9 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include "Utilities.h"
+#include "OpenCV_processing.h"
+
+
 
 void ExampleSVM();
 void LoadTrainingData(::std::vector<::std::string>& listOfFiles);
@@ -21,8 +24,8 @@ void LabelData(const ::std::vector<::std::string>& listOfFiles, cv::Mat& labels)
 void FeatureExtraction(const ::std::vector<::std::string>& listOfFiles, ::Eigen::MatrixXd& featureMatrix);
 void FeatureExtraction(const ::std::vector<::std::string>& listOfFiles, ::cv::Mat& featureMatrix);
 
-::std::string searchpath = "C:/Users/RC/Dropbox/Boston/BCH/surgery/2016-05-26_14-14-40/*.png";
-::std::string path = "C:/Users/RC/Dropbox/Boston/BCH/surgery/2016-05-26_14-14-40/";
+::std::string path = "C:\\Users\\CH182482\\Documents\\Data\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-14-40\\";
+::std::string searchpath = path + "*.png";
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -39,6 +42,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	int numOfFeatures = 1;	
 	::cv::Mat featureMatrix(listOfFiles.size(), numOfFeatures, CV_32F);
 	FeatureExtraction(listOfFiles, featureMatrix);
+
 
 
 	// label data
@@ -107,6 +111,20 @@ void FeatureExtraction(const ::std::vector<::std::string>& listOfFiles, ::cv::Ma
 		vector<cv::Point2f> corners;
 		imageRGB = cv::imread(path + it->c_str(), cv::IMREAD_COLOR); // Read the file
 		image = cv::imread(path + it->c_str(), cv::IMREAD_GRAYSCALE); // Read the file
+
+
+
+
+		// Opponent space thresholding 
+		::std::vector<::cv::Mat> OpponentChannels;
+		convertBGRImageToOpponentColorSpace(imageRGB,OpponentChannels);
+		::cv::Mat O1 = OpponentChannels.front();
+		::cv::Mat O1_thresh;
+
+		::cv::threshold(O1,O1_thresh,125.0,255,0);
+		::cv::imshow("O1 channel", O1_thresh);
+		::cv::Scalar MeanO1Intensity = ::cv::mean(O1_thresh);
+
  
 		// Define ROI
 		cv::Rect Rec(80, 0, 100, 250);
