@@ -46,22 +46,42 @@ int _tmain(int argc, _TCHAR* argv[])
 	::cv::Mat featureMatrix(listOfFiles.size(), numOfFeatures, CV_32F);
 	FeatureExtraction(listOfFiles, featureMatrix);
 
+
 	// label data
 	cv::Mat labelsMat;
-	int numberOfPcsToLabel = 5;
+	int numberOfPcsToLabel = 25;
 	::std::vector<::std::string> shortListOfFiles(listOfFiles.begin(), listOfFiles.begin() + numberOfPcsToLabel);
 	LabelData(shortListOfFiles, labelsMat);
 
 	
 	// train classifier
-	//::cv::Ptr<::cv::ml::SVM> svm = ::cv::ml::SVM::create();
- //   svm->setType(::cv::ml::SVM::C_SVC);
- //   svm->setKernel(::cv::ml::SVM::LINEAR);
- //   svm->setTermCriteria(::cv::TermCriteria::TermCriteria(::cv::TermCriteria::TermCriteria::MAX_ITER, 100, 1e-6));
- //   svm->train(featureMatrix, ::cv::ml::SampleTypes::ROW_SAMPLE, labelsMat);
-	//// test classifier
+	::cv::Ptr<::cv::ml::SVM> svm = ::cv::ml::SVM::create();
+    svm->setType(::cv::ml::SVM::C_SVC);
+    svm->setKernel(::cv::ml::SVM::LINEAR);
+    svm->setTermCriteria(::cv::TermCriteria(::cv::TermCriteria::MAX_ITER, 100, 1e-6));
+
+	//::cv::Mat featureInput = featureMatrix.rowRange(0, 5);
+    svm->train(featureMatrix, ::cv::ml::SampleTypes::ROW_SAMPLE, labelsMat);
+
+	::cv::Mat results2;
+	svm->predict(featureMatrix, results2);
+
+	::std::cout << "Labels" << labelsMat << ::std::endl;
+	::std::cout << "Test" << results2 << ::std::endl;
+
+	::std::cout << "------------------------" << ::std::endl;
 
 	// save classifier
+	svm->save("test_SVM");
+
+	// load and test classifier
+	::cv::Mat results;
+	::cv::Ptr<::cv::ml::SVM> svm3 = ::cv::ml::SVM::load<::cv::ml::SVM>(::cv::String("test_SVM"));
+	svm3->predict(featureMatrix, results);
+
+	::std::cout << "Labels" << labelsMat << ::std::endl;
+	::std::cout << "Test" << results << ::std::endl;
+
 	return 0;
 }
 
@@ -113,9 +133,6 @@ void FeatureExtraction(const ::std::vector<::std::string>& listOfFiles, ::cv::Ma
 		imageRGB = cv::imread(path + it->c_str(), cv::IMREAD_COLOR); // Read the file
 		image = cv::imread(path + it->c_str(), cv::IMREAD_GRAYSCALE); // Read the file
 
-
-
-
 		// Opponent space thresholding 
 		::std::vector<::cv::Mat> OpponentChannels;
 		convertBGRImageToOpponentColorSpace(imageRGB,OpponentChannels);
@@ -126,7 +143,7 @@ void FeatureExtraction(const ::std::vector<::std::string>& listOfFiles, ::cv::Ma
 		::cv::imshow("O1 channel", O1_thresh);
 		::cv::Scalar MeanO1Intensity = ::cv::mean(O1_thresh);
 
- 
+
 		// Define ROI
 		cv::Rect Rec(80, 0, 100, 250);
 		cv::rectangle(imageRGB, Rec, cv::Scalar(255), 1, 8, 0);
