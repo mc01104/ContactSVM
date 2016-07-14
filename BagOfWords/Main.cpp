@@ -11,6 +11,7 @@
 #include "Main.h"
 #include "BOW_lowlevel.h"
 #include "FileUtils.h"
+#include "Network_force.h"
 
 
 /*bool testBOW(std::string path, BOW_l bow)
@@ -119,21 +120,25 @@ int main( int argc, char** argv )
 	//	testBOW(test_path_free,bow);*/
 	//}
 
-	::std::cout << "Load from file test" << ::std::endl;
-	if (bow.LoadFromFile(output_path)) 
-	{
-		::std::cout << "Test with Contact" << ::std::endl;
-		testBOW(test_path_contact,bow, true);
+	//::std::cout << "Load from file test" << ::std::endl;
+	//if (bow.LoadFromFile(output_path)) 
+	//{
+	//	::std::cout << "Test with Contact" << ::std::endl;
+	//	testBOW(test_path_contact,bow, true);
 
-		::std::cout << "Test with Free file" << ::std::endl;
-		testBOW(test_path_free,bow, true);
+	//	::std::cout << "Test with Free file" << ::std::endl;
+	//	testBOW(test_path_free,bow, true);
 
-		testBOW(test_path_surgery,bow, true);
-	}
-	else 
-	{
-		::std::cout << "Error in BOW loading" << ::std::endl;
-	}
+	//	testBOW(test_path_surgery,bow, true);
+	//}
+	//else 
+	//{
+	//	::std::cout << "Error in BOW loading" << ::std::endl;
+	//}
+
+	Network_force testForce(output_path,test_path_surgery);
+
+	testForce.runThreads();
 
 	system("pause");
 	return 0;

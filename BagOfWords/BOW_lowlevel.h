@@ -19,6 +19,8 @@ public:
 	bool SaveToFile(::std::string path);
 	bool trainBOW(::std::string path);
 	bool predictBOW(std::string path, float& response);
+	bool predictBOW(::cv::Mat img, float& response);
+
 
 	::std::vector<::std::string> getClasses();
 

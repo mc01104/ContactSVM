@@ -253,11 +253,26 @@ Returns true if there was no runtime error during prediction
 */
 bool BOW_l::predictBOW(std::string path, float& response)
 {
+	::cv::Mat img = ::cv::imread(path);
+	return predictBOW(img, response);
+}
+
+
+/*
+Does a prediction using the BOW
+
+Arguments:
+	- img is a openCV Mat containing an image
+	- float is a reference which will take the response
+
+Returns true if there was no runtime error during prediction
+*/
+bool BOW_l::predictBOW(::cv::Mat img, float& response)
+{
 
 	std::vector<cv::KeyPoint> keyPoints;
 	::cv::Mat descriptors;
 
-	::cv::Mat img = ::cv::imread(path);
 	::cv::Mat bowDescriptor;	
 
 	::cv::Mat wordsInImg;
