@@ -20,6 +20,8 @@ public:
 	bool trainBOW(::std::string path);
 	bool predictBOW(std::string path, float& response);
 
+	::std::vector<::std::string> getClasses();
+
 
 private:
 	::cv::Ptr<::cv::FeatureDetector> m_featureDetector;

@@ -48,6 +48,15 @@ bool BOW_l::LoadFromFile(::std::string path)
 		storage["scale_stds"] >> m_scaling_stds;
 		storage.release();   
 
+		m_classes.clear();
+		storage = ::cv::FileStorage(path + "CLASSES.xml", cv::FileStorage::READ);
+		::cv::FileNode n = storage["classes"];                         // Read string sequence - Get node
+		::cv::FileNodeIterator it = n.begin(), it_end = n.end(); // Go through the node
+		for (; it != it_end; ++it)
+			m_classes.push_back((::std::string)*it);
+		storage.release();   
+
+
 		return true;
 	}
 	catch ( const std::exception & e ) 
@@ -80,7 +89,12 @@ bool BOW_l::SaveToFile(::std::string path)
 		storage << "scale_stds" << m_scaling_stds;
 		storage.release();   
 
-
+		storage = ::cv::FileStorage(path + "CLASSES.xml", cv::FileStorage::WRITE);
+		storage << "classes" << "[";
+		for (int i=0;i<m_classes.size();i++) storage<<m_classes[i];
+		storage << "]"; 
+		storage.release();   
+		
 		return true;
 	}
 	catch ( const std::exception & e ) 
@@ -88,6 +102,12 @@ bool BOW_l::SaveToFile(::std::string path)
 		::std::cerr << e.what();
 		return false;
 	}
+}
+
+
+::std::vector<::std::string> BOW_l::getClasses()
+{
+	return m_classes;
 }
 
 
@@ -119,6 +139,7 @@ bool BOW_l::trainBOW(::std::string path)
 	int class_id = 0;
 	if (getClassesNames(m_classes, path))
 	{
+		
 		for each (std::string className in m_classes)
 		{
 			int count = getImList(m_imList, path + className);

@@ -43,6 +43,7 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 	std::deque<float> values(5,0);
 	float average_val = 0.0;
 
+	::std::vector<::std::string> classes = bow.getClasses();
 
 	for(int i=0; i<imList.size();i++)
 	{
@@ -50,8 +51,8 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 		std::string filepath = path + "\\" + imList[i];
 		if (bow.predictBOW(filepath,response)) 
 		{
-			if (response<1.0) response = 1.0;
-			else response = 0.0;
+			if (classes[(int) response] == "Free") response = 0.0;
+			else response = 1.0;
 
 			float popped = values.front();
 			values.pop_front();
@@ -94,35 +95,38 @@ int main( int argc, char** argv )
 	char * outputfile = getCmdOption(argv, argv + argc, "-o");
 	*/
 
-	std::string path = "C:\\Users\\CH182482\\Documents\\Software\\Python_scripts\\bag-of-words\\contactdetect\\train\\";
-	std::string test_path_contact = "C:\\Users\\CH182482\\Documents\\Software\\Python_scripts\\bag-of-words\\contactdetect\\test\\Contact\\";
-	std::string test_path_free = "C:\\Users\\CH182482\\Documents\\Software\\Python_scripts\\bag-of-words\\contactdetect\\test\\Free\\";
+	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\";
 
-	::std::string test_path_surgery = "C:\\Users\\CH182482\\Documents\\Data\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11";
+	std::string train_path = base_folder + "train\\";
 
-	std::string output_path = "C:\\Users\\CH182482\\Documents\\Software\\Python_scripts\\bag-of-words\\contactdetect\\output_";
+	std::string test_path_contact = base_folder + "test\\Contact\\";
+	std::string test_path_free =  base_folder + "test\\Free\\";
+
+	::std::string test_path_surgery =  base_folder + "..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
+
+	std::string output_path = base_folder + "output_";
 
 	BOW_l bow;
 
-	if (bow.trainBOW(path))
-	{
-		bow.SaveToFile(output_path);
+	//if (bow.trainBOW(train_path))
+	//{
+	//	bow.SaveToFile(output_path);
 
-		/*::std::cout << "Test with Contact" << ::std::endl;
-		testBOW(test_path_contact,bow);
+	//	/*::std::cout << "Test with Contact" << ::std::endl;
+	//	testBOW(test_path_contact,bow);
 
-		::std::cout << "Test with Free file" << ::std::endl;
-		testBOW(test_path_free,bow);*/
-	}
+	//	::std::cout << "Test with Free file" << ::std::endl;
+	//	testBOW(test_path_free,bow);*/
+	//}
 
 	::std::cout << "Load from file test" << ::std::endl;
 	if (bow.LoadFromFile(output_path)) 
 	{
-		/*::std::cout << "Test with Contact" << ::std::endl;
+		::std::cout << "Test with Contact" << ::std::endl;
 		testBOW(test_path_contact,bow, true);
 
 		::std::cout << "Test with Free file" << ::std::endl;
-		testBOW(test_path_free,bow, true);*/
+		testBOW(test_path_free,bow, true);
 
 		testBOW(test_path_surgery,bow, true);
 	}
