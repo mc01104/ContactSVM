@@ -40,6 +40,14 @@ bool BOW_l::LoadFromFile(::std::string path)
 
 		m_bowide->setVocabulary(m_vocabulary);
 
+		storage = ::cv::FileStorage(path + "SCALE_means.xml", cv::FileStorage::READ);
+		storage["scale_m"] >> m_scaling_means;
+		storage.release();   
+
+		storage = ::cv::FileStorage(path + "SCALE_stds.xml", cv::FileStorage::READ);
+		storage["scale_stds"] >> m_scaling_stds;
+		storage.release();   
+
 		return true;
 	}
 	catch ( const std::exception & e ) 
@@ -61,6 +69,15 @@ bool BOW_l::SaveToFile(::std::string path)
 
 		cv::FileStorage storage(path + "VOC.xml", cv::FileStorage::WRITE);
 		storage << "vocabulary" << m_vocabulary;
+		storage.release();   
+
+
+		storage = ::cv::FileStorage(path + "SCALE_means.xml", cv::FileStorage::WRITE);
+		storage << "scale_m" << m_scaling_means;
+		storage.release();   
+
+		storage = ::cv::FileStorage(path + "SCALE_stds.xml", cv::FileStorage::WRITE);
+		storage << "scale_stds" << m_scaling_stds;
 		storage.release();   
 
 
@@ -166,9 +183,6 @@ bool BOW_l::trainBOW(::std::string path)
 		col = col - mean.val[0];
 		col = col / stdev.val[0];
 
-		::std::cout << col << ::std::endl;
-		::std::cout << " " << ::std::endl;
-
 		m_scaling_means.push_back(mean.val[0]);
 		m_scaling_stds.push_back(stdev.val[0]);
 
@@ -201,6 +215,7 @@ bool BOW_l::trainBOW(::std::string path)
 	//m_svm->setType(::cv::ml::SVM::C_SVC);
 	//m_svm->setKernel(::cv::ml::SVM::LINEAR);
 	//m_svm->setTermCriteria(::cv::TermCriteria(::cv::TermCriteria::MAX_ITER,1000,0.000001));
+	m_svm->setGamma(0.02);
 
 	return m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE,labels);
 
@@ -219,25 +234,54 @@ bool BOW_l::predictBOW(std::string path, float& response)
 {
 
 	std::vector<cv::KeyPoint> keyPoints;
+	::cv::Mat descriptors;
 
 	::cv::Mat img = ::cv::imread(path);
-	::cv::Mat bowDescriptor;
+	::cv::Mat bowDescriptor;	
+
+	::cv::Mat wordsInImg;
+
+	std::vector<int> v_word_labels;
+	for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
 
 	m_featureDetector->detect(img, keyPoints);
-	m_bowide->compute(img, keyPoints, bowDescriptor);
+	m_descriptorExtractor->compute(img, keyPoints,descriptors);
 
-	for (int i=0; i<bowDescriptor.cols;i++)
+
+	// Vector quantization of words in image
+	::cv::Ptr<::cv::ml::KNearest> knn = ::cv::ml::KNearest::create();
+	knn->setDefaultK(1);
+	knn->train(m_vocabulary, ::cv::ml::ROW_SAMPLE, v_word_labels);
+	knn->findNearest(descriptors,1,wordsInImg);
+
+	
+	// construction of response histogram
+	::std::vector<float> temp(m_vocabulary.rows, 0.0);
+
+	for(int i=0; i<wordsInImg.rows;i++)
 	{
-		::cv::Mat col = bowDescriptor.col(i);
+		int word = wordsInImg.at<float>(i,0);
+		temp[word] ++;
+	}
+	::cv::Mat response_histogram;
+	::cv::transpose(::cv::Mat(temp),response_histogram); // make a row-matrix from the column one made from the vector
+
+
+	// Normalization of response histogram
+	for (int i=0; i<response_histogram.cols;i++)
+	{
+		::cv::Mat col = response_histogram.col(i);
 
 		col = col - m_scaling_means[i];
 		col = col / m_scaling_stds[i];
 	}
 
+
+	//m_bowide->compute(img, keyPoints, bowDescriptor);
 	response = 0.0;
 	try
 	{
-		response = m_svm->predict(bowDescriptor);
+		response = m_svm->predict(response_histogram);
 	}
 	catch ( const std::exception & e ) 
 	{

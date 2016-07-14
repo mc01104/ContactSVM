@@ -76,7 +76,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	// load and test classifier
 	::cv::Mat results;
-	::cv::Ptr<::cv::ml::SVM> svm3 = ::cv::ml::SVM::load<::cv::ml::SVM>(::cv::String("test_SVM"));
+	::cv::Ptr<::cv::ml::SVM> svm3 = ::cv::ml::StatModel::load<::cv::ml::SVM>(::cv::String("test_SVM"));
 	svm3->predict(featureMatrix, results);
 
 	::std::cout << "Labels" << labelsMat << ::std::endl;
