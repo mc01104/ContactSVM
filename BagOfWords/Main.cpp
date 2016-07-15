@@ -12,6 +12,7 @@
 #include "BOW_lowlevel.h"
 #include "FileUtils.h"
 #include "Network_force.h"
+#include "helper_parseopts.h"
 
 
 /*bool testBOW(std::string path, BOW_l bow)
@@ -85,17 +86,6 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 int main( int argc, char** argv )
 {
 
-	/*
-	if(cmdOptionExists(argv, argv+argc, "-d"))
-    {
-		// load dictionary from file
-    }
-
-    char * inputfile = getCmdOption(argv, argv + argc, "-i");
-
-	char * outputfile = getCmdOption(argv, argv + argc, "-o");
-	*/
-
 	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\";
 
 	std::string train_path = base_folder + "train\\";
@@ -106,6 +96,44 @@ int main( int argc, char** argv )
 	::std::string test_path_surgery =  base_folder + "..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
 
 	std::string output_path = base_folder + "output_";
+
+	std::string ip = "192.168.0.12";
+
+	float gain = 3.0;
+
+
+	if(cmdOptionExists(argv, argv+argc, "-i"))
+    {
+		char * inputfile = getCmdOption(argv, argv + argc, "-i");
+		test_path_surgery  = ::std::string(inputfile);
+    }
+
+	if(cmdOptionExists(argv, argv+argc, "-s"))
+    {
+		char * outputfile = getCmdOption(argv, argv + argc, "-s");
+		output_path  = ::std::string(outputfile);
+    }
+
+	if(cmdOptionExists(argv, argv+argc, "-ip"))
+    {
+		char * s_ip = getCmdOption(argv, argv + argc, "-ip");
+		ip  = ::std::string(s_ip);
+    }
+
+	if(cmdOptionExists(argv, argv+argc, "-g"))
+    {
+		char * s_gain = getCmdOption(argv, argv + argc, "-g");
+		try { gain  = atof(s_gain); }
+		catch ( const std::exception & e ) { gain = 3.0;}
+    }
+
+	if(cmdOptionExists(argv, argv+argc, "-h"))
+    {
+		std::cout << "Command line options are: \n -i for input path of image files \n -s for basepath of saved SVM files \n -ip to set the IP address of the server \n -g to set the force gain" << ::std::endl;
+		return 0;
+    }
+
+	
 
 	BOW_l bow;
 
@@ -137,7 +165,7 @@ int main( int argc, char** argv )
 	//}
 
 	Network_force testForce(output_path,test_path_surgery);
-
+	testForce.setForceGain(gain);
 	testForce.runThreads();
 
 	system("pause");

@@ -60,6 +60,11 @@ void Network_force::runThreads()
 	t_network.join();
 }
 
+void Network_force::setForceGain(float gain)
+{
+	m_force_gain = gain;
+}
+
 bool Network_force::networkForce(void)
 {
 	/**********

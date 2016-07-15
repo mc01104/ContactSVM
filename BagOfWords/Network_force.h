@@ -40,6 +40,7 @@ public:
 	void setBOW(BOW_l bow);
 
 	void setSource(std::string path);
+	void setForceGain(float gain);
 
 private:
 	BOW_l m_bow;
