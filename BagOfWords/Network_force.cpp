@@ -44,6 +44,18 @@ Network_force::Network_force(::std::string svm_base_path, ::std::string image_pa
 	m_imagepath = image_path;
 
 	m_ipaddress = "192.168.0.12";
+
+	m_kalman = ::cv::KalmanFilter(1,1);
+
+	cv::setIdentity(m_kalman.measurementMatrix);
+
+	cv::setIdentity(m_kalman.processNoiseCov, cv::Scalar::all(0.5));
+
+	//std::cout << m_kalman.measurementMatrix << ::std::endl;
+	//std::cout << m_kalman.transitionMatrix << ::std::endl;
+
+	//std::cout << m_kalman.measurementNoiseCov << ::std::endl;
+	//std::cout << m_kalman.processNoiseCov << ::std::endl;
 }
 
 Network_force::~Network_force()
@@ -141,11 +153,14 @@ bool Network_force::networkForce(void)
 
 
 		m_mutex_force.lock();
-		curForce = m_contact*m_force_gain;
+		curForce = m_contact;
+		cv::Mat prediction = m_kalman.predict();
 		m_mutex_force.unlock();
 
+		float f_prediction = prediction.at<float>(0,0);
+
 		char test[5]; 
-		sprintf(test,"%.2f",curForce);
+		sprintf(test,"%.2f",f_prediction);
 		/*****
 		Send back force data
 		*****/
@@ -195,7 +210,8 @@ bool Network_force::processImages(void)
 			average_val = (average_val*5.0 - popped + response)/5.0;
 
 			m_mutex_force.lock();
-			m_contact = average_val;
+			m_contact = average_val*m_force_gain;
+			m_kalman.correct(cv::Mat(1,1,CV_32FC1,cv::Scalar(response)));
 			m_mutex_force.unlock();
 
 			if(visualization)
@@ -204,6 +220,8 @@ bool Network_force::processImages(void)
 				::cv::imshow("Image", img);
 				key = ::cv::waitKey(10);
 				if (key==27) m_running = false;
+
+				if (key=='c') ::cv::waitKey(0);
 			}
 
 

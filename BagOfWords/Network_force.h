@@ -56,4 +56,6 @@ private:
 	bool processImages(void);
 
 	bool m_running;
+
+	::cv::KalmanFilter m_kalman;
 };
