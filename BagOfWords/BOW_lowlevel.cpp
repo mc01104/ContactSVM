@@ -317,7 +317,7 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 	response = 0.0;
 	try
 	{
-		response = m_svm->predict(response_histogram);
+		response = m_svm->predict(response_histogram, ::cv::noArray(), ::cv::ml::StatModel::RAW_OUTPUT);
 	}
 	catch ( const std::exception & e ) 
 	{
