@@ -16,6 +16,11 @@ BOW_l::BOW_l()
 	
 	m_descriptorMatcher = ::cv::DescriptorMatcher::create("FlannBased");
 	m_bowide = new ::cv::BOWImgDescriptorExtractor(m_descriptorExtractor, m_descriptorMatcher);
+
+	m_knn = ::cv::ml::KNearest::create();
+	m_knn->setAlgorithmType(::cv::ml::KNearest::BRUTE_FORCE);
+
+	m_trained = false;
 }
 
 
@@ -40,6 +45,15 @@ bool BOW_l::LoadFromFile(::std::string path)
 
 		m_bowide->setVocabulary(m_vocabulary);
 
+		std::vector<int> v_word_labels;
+		for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
+		::cv::Mat mat_words_labels(v_word_labels);
+		m_knn->clear();
+		m_knn->setDefaultK(1);
+		m_knn->setAlgorithmType(::cv::ml::KNearest::BRUTE_FORCE);
+		m_knn->train(m_vocabulary, ::cv::ml::ROW_SAMPLE, mat_words_labels);
+
+
 		storage = ::cv::FileStorage(path + "SCALE_means.xml", cv::FileStorage::READ);
 		storage["scale_m"] >> m_scaling_means;
 		storage.release();   
@@ -56,12 +70,13 @@ bool BOW_l::LoadFromFile(::std::string path)
 			m_classes.push_back((::std::string)*it);
 		storage.release();   
 
-
+		m_trained = true;
 		return true;
 	}
 	catch ( const std::exception & e ) 
 	{
 		::std::cerr << e.what();
+		m_trained = false;
 		return false;
 	}
 }
@@ -94,7 +109,7 @@ bool BOW_l::SaveToFile(::std::string path)
 		for (int i=0;i<m_classes.size();i++) storage<<m_classes[i];
 		storage << "]"; 
 		storage.release();   
-		
+
 		return true;
 	}
 	catch ( const std::exception & e ) 
@@ -173,6 +188,15 @@ bool BOW_l::trainBOW(::std::string path)
 	//m_bowtrainer->add(training_descriptors);
 	//m_vocabulary = m_bowtrainer->cluster(); 
 
+
+	// train knn for predicting later
+	std::vector<int> v_word_labels;
+	for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
+	::cv::Mat mat_words_labels(v_word_labels);
+	m_knn->setDefaultK(1);
+	m_knn->setAlgorithmType(::cv::ml::KNearest::BRUTE_FORCE);
+	m_knn->train(m_vocabulary, ::cv::ml::ROW_SAMPLE, mat_words_labels);
+
 	::std::vector<float> temp(k, 0.0);
 	::std::vector< ::std::vector<float> > v_im_histograms(m_imList.size(),temp);
 
@@ -238,7 +262,10 @@ bool BOW_l::trainBOW(::std::string path)
 	//m_svm->setTermCriteria(::cv::TermCriteria(::cv::TermCriteria::MAX_ITER,1000,0.000001));
 	m_svm->setGamma(0.02);
 
-	return m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE,labels);
+	if (m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE,labels)) m_trained = false;
+	else m_trained = true;
+
+	return m_trained;
 
 }
 
@@ -270,6 +297,8 @@ Returns true if there was no runtime error during prediction
 bool BOW_l::predictBOW(::cv::Mat img, float& response)
 {
 
+	if (!m_trained) return false;
+
 	std::vector<cv::KeyPoint> keyPoints;
 	::cv::Mat descriptors;
 
@@ -285,10 +314,9 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 
 
 	// Vector quantization of words in image
-	::cv::Ptr<::cv::ml::KNearest> knn = ::cv::ml::KNearest::create();
-	knn->setDefaultK(1);
-	knn->train(m_vocabulary, ::cv::ml::ROW_SAMPLE, v_word_labels);
-	knn->findNearest(descriptors,1,wordsInImg);
+	m_knn->findNearest(descriptors,1,wordsInImg);
+
+	::std::cout << wordsInImg << ::std::endl;
 
 	
 	// construction of response histogram

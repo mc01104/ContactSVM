@@ -37,6 +37,9 @@ private:
 	::cv::TermCriteria m_tc_Kmeans;
 	::cv::TermCriteria m_tc_SVM;
 
+	
+	::cv::Ptr<::cv::ml::KNearest> m_knn;
+
 	std::vector<std::string> m_classes;
 	std::vector<std::string> m_imList;
 	std::vector<std::string> m_classList;
@@ -46,4 +49,6 @@ private:
 	std::vector<float> m_scaling_stds;
 
 	int m_dictionarySize;
+
+	bool m_trained;
 };

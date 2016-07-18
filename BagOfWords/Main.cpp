@@ -7,6 +7,8 @@
 #include <stdexcept> 
 #include <algorithm>
 #include <deque>
+#include <chrono>
+
 
 #include "Main.h"
 #include "BOW_lowlevel.h"
@@ -37,7 +39,9 @@
 bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 {
 
-	
+	auto start = ::std::chrono::steady_clock::now();
+	auto end = ::std::chrono::steady_clock::now();
+
 	::std::vector<::std::string> imList;
 	int count = getImList(imList,path);
 	std::sort(imList.begin(), imList.end(), numeric_string_compare);
@@ -53,8 +57,14 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 	{
 		float response = 0.0;
 		std::string filepath = path + "\\" + imList[i];
+
+		start = ::std::chrono::steady_clock::now();
 		if (bow.predictBOW(filepath,response)) 
 		{
+			end = ::std::chrono::steady_clock::now();
+			auto diff = end-start;
+			::std::cout << ::std::chrono::duration <double, ::std::milli> (diff).count() << " ms" << ::std::endl;
+
 			//if (classes[(int) response] == "Free") response = 0.0;
 			//else response = 1.0;
 
@@ -72,7 +82,7 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 
 				::cv::putText(img,cv::String(::std::to_string(response).c_str()),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
 				::cv::imshow("Image", img);
-				char key = ::cv::waitKey(0);
+				char key = ::cv::waitKey(1);
 
 				if (key == 27) break;
 			}
