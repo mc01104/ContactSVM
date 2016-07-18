@@ -1,6 +1,8 @@
 #include "BOW_lowlevel.h"
 #include "FileUtils.h"
 
+#include <chrono>
+
 
 BOW_l::BOW_l()
 {
@@ -14,8 +16,8 @@ BOW_l::BOW_l()
 	int flags = ::cv::KMEANS_PP_CENTERS;
 	m_bowtrainer = new ::cv::BOWKMeansTrainer(50, m_tc_Kmeans, retries, flags);
 	
-	m_descriptorMatcher = ::cv::DescriptorMatcher::create("FlannBased");
-	m_bowide = new ::cv::BOWImgDescriptorExtractor(m_descriptorExtractor, m_descriptorMatcher);
+	//m_descriptorMatcher = ::cv::DescriptorMatcher::create("FlannBased");
+	//m_bowide = new ::cv::BOWImgDescriptorExtractor(m_descriptorExtractor, m_descriptorMatcher);
 
 	m_knn = ::cv::ml::KNearest::create();
 	m_knn->setAlgorithmType(::cv::ml::KNearest::BRUTE_FORCE);
@@ -43,7 +45,7 @@ bool BOW_l::LoadFromFile(::std::string path)
 		storage["vocabulary"] >> m_vocabulary;
 		storage.release();  
 
-		m_bowide->setVocabulary(m_vocabulary);
+		//m_bowide->setVocabulary(m_vocabulary);
 
 		std::vector<int> v_word_labels;
 		for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
@@ -183,6 +185,7 @@ bool BOW_l::trainBOW(::std::string path)
 
 	// kmeans classify
 	int k = 50;
+
 	::cv::kmeans(training_descriptors, k, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
 	// cluster and set vocabulary into bow ide
 	//m_bowtrainer->add(training_descriptors);
@@ -236,7 +239,7 @@ bool BOW_l::trainBOW(::std::string path)
 
 
 
-	m_bowide->setVocabulary(m_vocabulary);
+	//m_bowide->setVocabulary(m_vocabulary);
 	//// Setup training data for classifiers
 	//for(int i=0; i<m_imList.size();i++)
 	//{
@@ -309,15 +312,16 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 	std::vector<int> v_word_labels;
 	for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
 
+
+	// up to 13 ms fr feature detection and descriptor extraction
+	//m_featureDetector->detectAndCompute(img,cv::noArray(),keyPoints,descriptors); 
 	m_featureDetector->detect(img, keyPoints);
 	m_descriptorExtractor->compute(img, keyPoints,descriptors);
-
-
+	
+	
 	// Vector quantization of words in image
-	m_knn->findNearest(descriptors,1,wordsInImg);
-
-	::std::cout << wordsInImg << ::std::endl;
-
+	m_knn->findNearest(descriptors,1,wordsInImg);  // less than 1 ms here
+	
 	
 	// construction of response histogram
 	::std::vector<float> temp(m_vocabulary.rows, 0.0);
@@ -330,7 +334,6 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 	::cv::Mat response_histogram;
 	::cv::transpose(::cv::Mat(temp),response_histogram); // make a row-matrix from the column one made from the vector
 
-
 	// Normalization of response histogram
 	for (int i=0; i<response_histogram.cols;i++)
 	{
@@ -340,7 +343,7 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 		col = col / m_scaling_stds[i];
 	}
 
-
+		
 	//m_bowide->compute(img, keyPoints, bowDescriptor);
 	response = 0.0;
 	try

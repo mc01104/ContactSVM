@@ -17,7 +17,7 @@ BOW::BOW()
 	
 	m_descriptorMatcher = ::cv::DescriptorMatcher::create("FlannBased");
 
-	m_bowide = new ::cv::BOWImgDescriptorExtractor(m_descriptorExtractor, m_descriptorMatcher);
+m_bowide = new ::cv::BOWImgDescriptorExtractor(m_descriptorExtractor, m_descriptorMatcher);
 }
 
 

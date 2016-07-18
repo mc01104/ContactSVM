@@ -39,8 +39,6 @@
 bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 {
 
-	auto start = ::std::chrono::steady_clock::now();
-	auto end = ::std::chrono::steady_clock::now();
 
 	::std::vector<::std::string> imList;
 	int count = getImList(imList,path);
@@ -58,13 +56,9 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 		float response = 0.0;
 		std::string filepath = path + "\\" + imList[i];
 
-		start = ::std::chrono::steady_clock::now();
 		if (bow.predictBOW(filepath,response)) 
 		{
-			end = ::std::chrono::steady_clock::now();
-			auto diff = end-start;
-			::std::cout << ::std::chrono::duration <double, ::std::milli> (diff).count() << " ms" << ::std::endl;
-
+			
 			//if (classes[(int) response] == "Free") response = 0.0;
 			//else response = 1.0;
 
@@ -107,7 +101,7 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 int main( int argc, char** argv )
 {
 
-	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Surgery\\";
+	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Surgery_testFolder\\";
 
 	std::string train_path = base_folder + "train\\";
 
@@ -158,11 +152,11 @@ int main( int argc, char** argv )
 
 	BOW_l bow;
 
-	/*if (bow.trainBOW(train_path)) 
+	if (bow.trainBOW(train_path)) 
 	{
 		bow.SaveToFile(output_path);
 		std::cout << "BOW trained and saved" << std::endl;
-	}*/
+	}
 
 	//if (bow.trainBOW(train_path))
 	//{
