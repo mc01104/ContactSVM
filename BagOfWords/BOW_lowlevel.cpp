@@ -7,17 +7,14 @@
 BOW_l::BOW_l()
 {
 
-	m_featureDetector = ::cv::xfeatures2d::SURF::create();
-	m_descriptorExtractor =  ::cv::xfeatures2d::SURF::create();
+	m_featureDetector =  ::cv::xfeatures2d::SURF::create(); //::cv::BRISK::create(); //cv::AKAZE::create(); 
+	m_descriptorExtractor = ::cv::xfeatures2d::SURF::create(); //::cv::BRISK::create(); //cv::AKAZE::create(); 
 
 	m_dictionarySize = 10000;
 	m_tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
 	int retries = 1;
 	int flags = ::cv::KMEANS_PP_CENTERS;
 	m_bowtrainer = new ::cv::BOWKMeansTrainer(50, m_tc_Kmeans, retries, flags);
-	
-	//m_descriptorMatcher = ::cv::DescriptorMatcher::create("FlannBased");
-	//m_bowide = new ::cv::BOWImgDescriptorExtractor(m_descriptorExtractor, m_descriptorMatcher);
 
 	m_knn = ::cv::ml::KNearest::create();
 	m_knn->setAlgorithmType(::cv::ml::KNearest::BRUTE_FORCE);
@@ -139,6 +136,7 @@ returns true if the SVM is trained correctly
 bool BOW_l::trainBOW(::std::string path)
 {
 
+
 	// declare variables
 	std::vector<cv::KeyPoint> keyPoints;
 	::cv::Mat descriptors;
@@ -182,14 +180,14 @@ bool BOW_l::trainBOW(::std::string path)
 		for (int j = 0; j< descriptors.rows; j++) image_number.push_back(i);
 	}
 
+	// put descriptors in right format for kmeans clustering
+	if(training_descriptors.type()!=CV_32F) {
+		training_descriptors.convertTo(training_descriptors, CV_32F); 
+	}
 
-	// kmeans classify
+	// kmeans cluster to construct the vocabulary
 	int k = 50;
-
 	::cv::kmeans(training_descriptors, k, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
-	// cluster and set vocabulary into bow ide
-	//m_bowtrainer->add(training_descriptors);
-	//m_vocabulary = m_bowtrainer->cluster(); 
 
 
 	// train knn for predicting later
@@ -265,8 +263,8 @@ bool BOW_l::trainBOW(::std::string path)
 	//m_svm->setTermCriteria(::cv::TermCriteria(::cv::TermCriteria::MAX_ITER,1000,0.000001));
 	m_svm->setGamma(0.02);
 
-	if (m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE,labels)) m_trained = false;
-	else m_trained = true;
+	if (m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE,labels)) m_trained = true;
+	else m_trained = false;
 
 	return m_trained;
 
@@ -300,6 +298,9 @@ Returns true if there was no runtime error during prediction
 bool BOW_l::predictBOW(::cv::Mat img, float& response)
 {
 
+	::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
+	::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
+
 	if (!m_trained) return false;
 
 	std::vector<cv::KeyPoint> keyPoints;
@@ -312,15 +313,28 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 	std::vector<int> v_word_labels;
 	for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
 
-
-	// up to 13 ms fr feature detection and descriptor extraction
-	//m_featureDetector->detectAndCompute(img,cv::noArray(),keyPoints,descriptors); 
+	// Timings of different combinations of feature detector and descriptors
+	// ORB + ORB: 5-10 ms
+	// SURF + SURF: 7-15 ms
+	// AKAZE + AKAZE: 20-25 ms
+	// BRISK + BRISK: 1-2 ms
+	// ORB + BRISK: 2-3 ms
+	
 	m_featureDetector->detect(img, keyPoints);
 	m_descriptorExtractor->compute(img, keyPoints,descriptors);
+
+
+	
+
+	// put descriptors in right format for kmeans clustering
+	if(descriptors.type()!=CV_32F) {
+		descriptors.convertTo(descriptors, CV_32F); 
+	}
 	
 	
 	// Vector quantization of words in image
 	m_knn->findNearest(descriptors,1,wordsInImg);  // less than 1 ms here
+	
 	
 	
 	// construction of response histogram
@@ -349,6 +363,11 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 	try
 	{
 		response = m_svm->predict(response_histogram, ::cv::noArray(), ::cv::ml::StatModel::RAW_OUTPUT);
+
+		t2 = ::std::chrono::steady_clock::now();
+		std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds> (t2-t1);
+
+		std::cout << "time ms : " << ms.count() << std::endl;
 	}
 	catch ( const std::exception & e ) 
 	{

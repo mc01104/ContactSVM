@@ -101,7 +101,7 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 int main( int argc, char** argv )
 {
 
-	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Surgery_testFolder\\";
+	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Surgery_dev\\";
 
 	std::string train_path = base_folder + "train\\";
 
@@ -157,6 +157,7 @@ int main( int argc, char** argv )
 		bow.SaveToFile(output_path);
 		std::cout << "BOW trained and saved" << std::endl;
 	}
+
 
 	//if (bow.trainBOW(train_path))
 	//{
