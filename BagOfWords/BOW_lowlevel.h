@@ -2,6 +2,7 @@
 
 #include <opencv2\opencv.hpp>
 #include <opencv2\xfeatures2d\nonfree.hpp>
+#include <opencv2\xfeatures2d.hpp>
 #include <opencv2\features2d.hpp>
 #include <opencv2/ml.hpp>
 
@@ -12,7 +13,7 @@
 class BOW_l
 {
 public:
-	BOW_l();
+	BOW_l(std::string features = "FAST-LUCID");
 	~BOW_l();
 
 	bool LoadFromFile(::std::string path);

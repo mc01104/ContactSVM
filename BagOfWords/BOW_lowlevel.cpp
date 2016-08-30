@@ -4,11 +4,66 @@
 #include <chrono>
 
 
-BOW_l::BOW_l()
+BOW_l::BOW_l(std::string features)
 {
 
-	m_featureDetector =  ::cv::xfeatures2d::SURF::create(); //::cv::BRISK::create(); //cv::AKAZE::create(); 
-	m_descriptorExtractor = ::cv::xfeatures2d::SURF::create(); //::cv::BRISK::create(); //cv::AKAZE::create(); 
+
+	if (features=="BRISK")
+	{
+		m_featureDetector =  ::cv::BRISK::create(); //::cv::xfeatures2d::SURF::create(); //cv::AKAZE::create(); 
+		m_descriptorExtractor = ::cv::BRISK::create();  //::cv::xfeatures2d::SURF::create(); //cv::AKAZE::create(); 
+	}
+	else if (features=="SURF")
+	{
+		m_featureDetector =  ::cv::xfeatures2d::SURF::create();
+		m_descriptorExtractor = ::cv::xfeatures2d::SURF::create();
+	}
+	else if (features=="SIFT")  // Too slow
+	{
+		m_featureDetector =  ::cv::xfeatures2d::SIFT::create();
+		m_descriptorExtractor = ::cv::xfeatures2d::SIFT::create();
+	}
+	else if (features =="AKAZE")  // Too slow
+	{
+		m_featureDetector =  cv::AKAZE::create(); 
+		m_descriptorExtractor = cv::AKAZE::create(); 
+	}
+	else if (features =="ORB") // not good perfs
+	{
+		m_featureDetector =  cv::ORB::create(); 
+		m_descriptorExtractor = cv::ORB::create(); 
+	}
+	else if (features =="FAST-SURF") // Fast and good performance
+	{ 
+		m_featureDetector =  cv::FastFeatureDetector::create();
+		m_descriptorExtractor = cv::xfeatures2d::SURF::create();
+	}
+	else if (features =="FAST-LUCID") // Fast and good performance
+	{ 
+		m_featureDetector =  cv::FastFeatureDetector::create();
+		m_descriptorExtractor = cv::xfeatures2d::LUCID::create(2,1);
+	}
+	else if (features =="FREAK") // not very good perf
+	{
+		m_featureDetector =  cv::FastFeatureDetector::create();
+		m_descriptorExtractor = cv::xfeatures2d::FREAK::create(); 
+	}
+	else if (features =="MSD") // Too slow
+	{
+		m_featureDetector = cv::xfeatures2d::MSDDetector::create();
+		m_descriptorExtractor = cv::xfeatures2d::LUCID::create(2,1);
+	}
+	else if (features =="MSER") // Too slow
+	{
+		m_featureDetector = cv::MSER::create();
+		m_descriptorExtractor = cv::xfeatures2d::SURF::create();
+	}
+	
+	else // default to brisk
+	{
+		m_featureDetector =  cv::BRISK::create(); 
+		m_descriptorExtractor = cv::BRISK::create(); 
+	}
 
 	m_dictionarySize = 10000;
 	m_tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
@@ -362,12 +417,12 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 	response = 0.0;
 	try
 	{
-		response = m_svm->predict(response_histogram, ::cv::noArray(), ::cv::ml::StatModel::RAW_OUTPUT);
+		response = m_svm->predict(response_histogram, ::cv::noArray(), 0);//::cv::ml::StatModel::RAW_OUTPUT);
 
 		t2 = ::std::chrono::steady_clock::now();
 		std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds> (t2-t1);
 
-		std::cout << "time ms : " << ms.count() << std::endl;
+		//std::cout << "time ms : " << ms.count() << std::endl;
 	}
 	catch ( const std::exception & e ) 
 	{
