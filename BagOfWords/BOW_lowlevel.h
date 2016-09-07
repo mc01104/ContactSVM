@@ -30,7 +30,6 @@ public:
 private:
 	::cv::Ptr<::cv::FeatureDetector> m_featureDetector;
 	::cv::Ptr<::cv::DescriptorExtractor> m_descriptorExtractor;
-	::cv::Ptr<::cv::BOWKMeansTrainer> m_bowtrainer;
 	::cv::Mat m_vocabulary;
 	::cv::Ptr<::cv::DescriptorMatcher> m_descriptorMatcher;
 	//::cv::Ptr<::cv::BOWImgDescriptorExtractor> m_bowide;

@@ -218,9 +218,9 @@ int main( int argc, char** argv )
 
 	if (bow.LoadFromFile(output_path)) 
 	{
-		testBOW(test_path_contact,bow, false);
+		testBOW(test_path_contact,bow, true);
 
-		testBOW(test_path_free,bow, false);
+		testBOW(test_path_free,bow, true);
 	}
 
 	//if (bow.trainBOW(train_path))
