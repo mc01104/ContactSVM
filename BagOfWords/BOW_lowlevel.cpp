@@ -349,24 +349,6 @@ Arguments:
 	- float is a reference which will take the response
 
 Returns true if there was no runtime error during prediction
-*/
-bool BOW_l::predictBOW(::cv::Mat img, float& response)
-{
-
-	::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
-	::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
-
-	if (!m_trained) return false;
-
-	std::vector<cv::KeyPoint> keyPoints;
-	::cv::Mat descriptors;
-
-	::cv::Mat bowDescriptor;	
-
-	::cv::Mat wordsInImg;
-
-	std::vector<int> v_word_labels;
-	for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
 
 	// Timings of different combinations of feature detector and descriptors
 	// ORB + ORB: 5-10 ms
@@ -374,12 +356,24 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 	// AKAZE + AKAZE: 20-25 ms
 	// BRISK + BRISK: 1-2 ms
 	// ORB + BRISK: 2-3 ms
+
+*/
+bool BOW_l::predictBOW(::cv::Mat img, float& response)
+{
+
+	if (!m_trained) return false;
+
+	std::vector<cv::KeyPoint> keyPoints;
+	::cv::Mat descriptors;
+	::cv::Mat bowDescriptor;	
+	::cv::Mat wordsInImg;
+
+	std::vector<int> v_word_labels;
+	for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
 	
 	m_featureDetector->detect(img, keyPoints);
 	m_descriptorExtractor->compute(img, keyPoints,descriptors);
 
-
-	
 
 	// put descriptors in right format for kmeans clustering
 	if(descriptors.type()!=CV_32F) {
@@ -412,25 +406,17 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 		col = col / m_scaling_stds[i];
 	}
 
-		
-	//m_bowide->compute(img, keyPoints, bowDescriptor);
 	response = 0.0;
 	try
 	{
 		response = m_svm->predict(response_histogram, ::cv::noArray(), 0);//::cv::ml::StatModel::RAW_OUTPUT);
-
-		t2 = ::std::chrono::steady_clock::now();
-		std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds> (t2-t1);
-
-		//std::cout << "time ms : " << ms.count() << std::endl;
+		return true;
 	}
 	catch ( const std::exception & e ) 
 	{
-		::std::cerr << e.what();
+		::std::cout << e.what();
 		return false;
 	}
-
-	return true;
 }
 
 

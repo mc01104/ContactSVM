@@ -156,6 +156,7 @@ int main( int argc, char** argv )
 
 	::std::string test_path_surgery =  base_folder + "..\\..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
 	test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-24-43\\";
+	test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-10-26\\";
 	//test_path_surgery = base_folder + "..\\ExtractedImages_paper\\";
 
 	std::string output_path = base_folder + "output_";
@@ -217,7 +218,9 @@ int main( int argc, char** argv )
 
 	if (bow.LoadFromFile(output_path)) 
 	{
-		testBOW(test_path_surgery,bow, false);
+		testBOW(test_path_contact,bow, false);
+
+		testBOW(test_path_free,bow, false);
 	}
 
 	//if (bow.trainBOW(train_path))
