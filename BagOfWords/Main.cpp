@@ -112,7 +112,12 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 	double sum = std::accumulate(timings.begin(), timings.end(), 0.0);
 	double mean = sum/1000.0 / timings.size();
 
+	auto result = std::minmax_element(timings.begin(), timings.end());
+	
 	std::cout << "Average prediction time (ms): " << mean << ::std::endl;
+
+	std::cout << "min is " << *result.first / 1000.0  << ::std::endl;
+	std::cout << "max is " << *result.second / 1000.0 << ::std::endl;
 
 	return true;
 }
@@ -142,7 +147,7 @@ void testBOWFeature(std::string feature, std::string train_path, std::string tes
 int main( int argc, char** argv )
 {
 
-	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Benchtop_randomized_dataset\\";
+	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Surgery_dev\\";
 
 	std::string train_path = base_folder + "train\\";
 
@@ -151,7 +156,7 @@ int main( int argc, char** argv )
 
 	::std::string test_path_surgery =  base_folder + "..\\..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
 	test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-24-43\\";
-
+	//test_path_surgery = base_folder + "..\\ExtractedImages_paper\\";
 
 	std::string output_path = base_folder + "output_";
 
@@ -197,17 +202,22 @@ int main( int argc, char** argv )
 	testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
 	*/
 
-	testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
+	//testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
 
-	system("pause");
+	//system("pause");
 
 	BOW_l bow("FAST-LUCID");
 
-	if (bow.trainBOW(train_path))
+	/*if (bow.trainBOW(train_path))
 	{
-		bow.SaveToFile(output_path);
+		//bow.SaveToFile(output_path);
 
-		testBOW(test_path_surgery,bow, true);
+		testBOW(test_path_surgery,bow, false);
+	}*/
+
+	if (bow.LoadFromFile(output_path)) 
+	{
+		testBOW(test_path_surgery,bow, false);
 	}
 
 	//if (bow.trainBOW(train_path))

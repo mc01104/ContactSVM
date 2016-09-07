@@ -432,3 +432,93 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 
 	return true;
 }
+
+
+
+
+
+/*
+Does a prediction using the BOW
+
+Arguments:
+	- img is a openCV Mat containing an image
+	- float is a reference which will take the response
+
+Returns true if there was no runtime error during prediction
+*/
+bool BOW_l::predictBOW_output(::cv::Mat img, float& response)
+{
+
+	if (!m_trained) return false;
+
+	std::vector<cv::KeyPoint> keyPoints;
+	::cv::Mat descriptors;
+
+	::cv::Mat bowDescriptor;	
+
+	::cv::Mat wordsInImg;
+
+	std::vector<int> v_word_labels;
+	for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
+
+	m_featureDetector->detect(img, keyPoints);
+	m_descriptorExtractor->compute(img, keyPoints,descriptors);
+
+	::cv::Mat keyPointsImg;
+	::cv::drawKeypoints(img, keyPoints,keyPointsImg, ::cv::Scalar( 0, 255, 0 ));
+
+
+	::cv::imshow("Keypoints", keyPointsImg );
+	::cv::waitKey(0);
+
+	// put descriptors in right format for kmeans clustering
+	if(descriptors.type()!=CV_32F) {
+		descriptors.convertTo(descriptors, CV_32F); 
+	}
+	
+	
+	// Vector quantization of words in image
+	m_knn->findNearest(descriptors,1,wordsInImg);  // less than 1 ms here
+	
+	
+	
+	// construction of response histogram
+	::std::vector<float> temp(m_vocabulary.rows, 0.0);
+
+	for(int i=0; i<wordsInImg.rows;i++)
+	{
+		int word = wordsInImg.at<float>(i,0);
+		temp[word] ++;
+	}
+	::cv::Mat response_histogram;
+	::cv::transpose(::cv::Mat(temp),response_histogram); // make a row-matrix from the column one made from the vector
+
+
+	cv::FileStorage file("test.xml", cv::FileStorage::WRITE);
+	file << "histogram" << response_histogram;
+
+	// Normalization of response histogram
+	for (int i=0; i<response_histogram.cols;i++)
+	{
+		::cv::Mat col = response_histogram.col(i);
+
+		col = col - m_scaling_means[i];
+		col = col / m_scaling_stds[i];
+	}
+
+		
+	//m_bowide->compute(img, keyPoints, bowDescriptor);
+	response = 0.0;
+	try
+	{
+		response = m_svm->predict(response_histogram, ::cv::noArray(), 0);//::cv::ml::StatModel::RAW_OUTPUT);
+
+	}
+	catch ( const std::exception & e ) 
+	{
+		::std::cerr << e.what();
+		return false;
+	}
+
+	return true;
+}
