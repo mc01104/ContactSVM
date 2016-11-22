@@ -90,7 +90,8 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 
 			average_val = (average_val*5.0 - popped + response)/5.0;
 
-			reponses.push_back(response);*/
+			*/
+			reponses.push_back(response);
 
 			if(visualization)
 			{
@@ -104,6 +105,12 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 		}
 		else ::std::cout << "Error in prediction" << ::std::endl;
 	}
+
+	
+	::std::string fname = path + "contact_values.xml";
+	cv::FileStorage fs(fname, cv::FileStorage::WRITE);        
+	fs << "contact" << reponses;
+	fs.release();
 
 	std::cout << "Number of images: " << imList.size() << ::std::endl;
 	std::cout << "Percent of contact: " << response_contact*1.0/imList.size() << ::std::endl;
@@ -156,7 +163,13 @@ int main( int argc, char** argv )
 
 	::std::string test_path_surgery =  base_folder + "..\\..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
 	test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-24-43\\";
-	test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-10-26\\";
+
+
+	::std::string example_surgery_path = base_folder + "..\\Example_surgery_video\\";
+
+	example_surgery_path =  base_folder + "..\\..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
+
+	//test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-10-26\\";
 	//test_path_surgery = base_folder + "..\\ExtractedImages_paper\\";
 
 	std::string output_path = base_folder + "output_";
@@ -218,9 +231,9 @@ int main( int argc, char** argv )
 
 	if (bow.LoadFromFile(output_path)) 
 	{
-		testBOW(test_path_contact,bow, true);
+		testBOW(example_surgery_path,bow, false);
 
-		testBOW(test_path_free,bow, true);
+		//testBOW(test_path_free,bow, true);
 	}
 
 	//if (bow.trainBOW(train_path))

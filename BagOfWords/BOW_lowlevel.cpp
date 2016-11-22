@@ -395,7 +395,7 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 	
 	::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
 	std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds> (t2-t1);
-	std::cout << ms.count()  << ::std::endl;
+	//std::cout << ms.count()  << ::std::endl;
 	
 	// construction of response histogram
 	::std::vector<float> temp(m_vocabulary.rows, 0.0);
