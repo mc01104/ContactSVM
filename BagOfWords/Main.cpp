@@ -1,6 +1,6 @@
-#include <opencv2\opencv.hpp>
-#include <opencv2\xfeatures2d\nonfree.hpp>
-#include <opencv2\features2d.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/xfeatures2d/nonfree.hpp>
+#include <opencv2/features2d.hpp>
 #include <opencv2/ml.hpp>
 
 #include <iostream> 
@@ -10,11 +10,16 @@
 #include <chrono>
 #include <numeric>
 
+
+#include <limits.h>
+#include <unistd.h>
+
 #include "Main.h"
 #include "BOW_lowlevel.h"
 #include "FileUtils.h"
 #include "Network_force.h"
 #include "helper_parseopts.h"
+#include "CSV_reader.h"
 
 
 /*bool testBOW(std::string path, BOW_l bow)
@@ -36,7 +41,7 @@
 
 
 
-bool testBOW(std::string path, BOW_l bow, bool visualization = false)
+bool testBOW(std::string path, BOW_l bow, bool visualization = false, int delay = 1)
 {
 
 	::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
@@ -60,7 +65,7 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 	for(int i=0; i<imList.size();i++)
 	{
 		float response = 0.0;
-		std::string filepath = path + "\\" + imList[i];
+        std::string filepath = path + "/" + imList[i];
 
 		::cv::Mat img = ::cv::imread(filepath);
 
@@ -98,7 +103,7 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 				
 				::cv::putText(img,cv::String(::std::to_string(response).c_str()),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
 				::cv::imshow("Image", img);
-				char key = ::cv::waitKey(1);
+                char key = ::cv::waitKey(delay);
 
 				if (key == 27) break;
 			}
@@ -154,49 +159,71 @@ void testBOWFeature(std::string feature, std::string train_path, std::string tes
 int main( int argc, char** argv )
 {
 
-	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Surgery_dev\\";
+    // Read folder from CSV file
+    // TODO: find a way of better defining this path relative to the exe/project dir
 
-	std::string train_path = base_folder + "train\\";
+    std::string csvDir = "/mnt/25CB1D633D27ACE0/Repositories/ContactSVM/folders_contactdetection.csv";
+    ParseOptions op = ParseOptions(csvDir);
 
-	std::string test_path_contact = base_folder + "validate\\Contact\\";
-	std::string test_path_free =  base_folder + "validate\\Free\\";
+    std::string base_folder;
+    std::string base_folder_surgeries;
 
-	::std::string test_path_surgery =  base_folder + "..\\..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
-	test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-24-43\\";
+    std::vector<std::string> folder;
+    if (op.getData(std::string("base_folder"),folder))
+    {
+        base_folder = folder[0];
+        std::cout << base_folder << std::endl;
+    }
+
+    if (op.getData(std::string("folder_surgeries"),folder))
+    {
+        base_folder_surgeries = folder[0];
+        std::cout << base_folder_surgeries << std::endl;
+    }
+
+    else
+    {
+        std::cout << "Problem parsing base folder path from CSV file" << std::endl;
+        return 0;
+    }
 
 
-	::std::string example_surgery_path = base_folder + "..\\Example_surgery_video\\";
+    //Define paths used later on and read command line options, if any
 
-	example_surgery_path =  base_folder + "..\\..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
-
-	//test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-10-26\\";
-	//test_path_surgery = base_folder + "..\\ExtractedImages_paper\\";
-
-	std::string output_path = base_folder + "output_";
-
-	std::string ip = "192.168.0.12";
-
-	float gain = 3.0;
+    std::string train_path = base_folder + "/train/";
+    std::string validate_path_contact = base_folder + "/validate/Contact/";
+    std::string validate_path_free =  base_folder + "/validate/Free/";
+    std::string test_path_contact = base_folder + "/test/Contact/";
+    std::string test_path_free =  base_folder + "/test/Free/";
 
 
+
+    // path of surgery images
+    ::std::string test_path_surgery =  base_folder_surgeries + "/2016-07-28_12-24-43/"; // "\\2016-07-28_12-24-43\\"
 	if(cmdOptionExists(argv, argv+argc, "-i"))
     {
 		char * inputfile = getCmdOption(argv, argv + argc, "-i");
 		test_path_surgery  = ::std::string(inputfile);
     }
 
+    // path of saved SVM data
+    std::string output_path = base_folder + "output_";
 	if(cmdOptionExists(argv, argv+argc, "-s"))
     {
 		char * outputfile = getCmdOption(argv, argv + argc, "-s");
 		output_path  = ::std::string(outputfile);
     }
 
+    // IP for connection to CTR computer
+    std::string ip = "192.168.0.12";
 	if(cmdOptionExists(argv, argv+argc, "-ip"))
     {
 		char * s_ip = getCmdOption(argv, argv + argc, "-ip");
 		ip  = ::std::string(s_ip);
     }
 
+    // Force gain
+    float gain = 3.0;
 	if(cmdOptionExists(argv, argv+argc, "-g"))
     {
 		char * s_gain = getCmdOption(argv, argv + argc, "-g");
@@ -211,31 +238,31 @@ int main( int argc, char** argv )
     }
 
 
-	/*testBOWFeature("SURF", train_path, test_path_contact, test_path_free);
-	testBOWFeature("FAST-SURF", train_path, test_path_contact, test_path_free);
-	testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
-	*/
-
-	//testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
-
-	//system("pause");
+    // This is where the fun begins !!!
 
 	BOW_l bow("FAST-LUCID");
 
-	/*if (bow.trainBOW(train_path))
-	{
-		//bow.SaveToFile(output_path);
+//    if (bow.trainBOW(train_path))
+//    {
+//        bow.SaveToFile(output_path);
 
-		testBOW(test_path_surgery,bow, false);
-	}*/
+//        testBOW(test_path_contact,bow, true);
+//        ::cv::waitKey(0);
+//        testBOW(test_path_free,bow, true);
+//        ::cv::waitKey(0);
 
-	if (bow.LoadFromFile(output_path)) 
-	{
-		testBOW(example_surgery_path,bow, false);
+//        //testBOW(test_path_contact,bow, true);
+//    }
 
-		//testBOW(test_path_free,bow, true);
-	}
 
+    if (bow.LoadFromFile(output_path))
+    {
+        testBOW(test_path_surgery,bow, true, 10);
+    }
+
+
+
+    // legacy code kepts as an example
 	//if (bow.trainBOW(train_path))
 	//{
 	//	bow.SaveToFile(output_path);
@@ -267,6 +294,6 @@ int main( int argc, char** argv )
 	testForce.setForceGain(gain);
 	testForce.runThreads();*/
 
-	system("pause");
+    //system("pause");
 	return 0;
 }

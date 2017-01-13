@@ -209,7 +209,7 @@ bool BOW_l::trainBOW(::std::string path)
 	if (getClassesNames(m_classes, path))
 	{
 		
-		for each (std::string className in m_classes)
+		for (std::string className : m_classes)
 		{
 			int count = getImList(m_imList, path + className);
 			for (int i=0;i<count;i++) 
@@ -225,7 +225,7 @@ bool BOW_l::trainBOW(::std::string path)
 	// get images and compute keypoints as training descriptors
 	for(int i=0; i<m_imList.size();i++)
 	{
-		std::string filepath = path + m_classList[i] + "\\" + m_imList[i];
+        std::string filepath = path + m_classList[i] + "/" + m_imList[i];
 
 		img = ::cv::imread(filepath);
 		m_featureDetector->detect(img,keyPoints);

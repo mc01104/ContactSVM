@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef LINUX
+
 #include <Eigen/Dense>
 #include <iostream>
 #include <vector>
@@ -42,5 +44,5 @@ public:
 	static void applyRotation(const HTransform& htransform, const ::std::vector<double>& inputVector, ::std::vector<double>& outputVector);
 };
 
-
+#endif
 

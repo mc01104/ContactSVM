@@ -3,10 +3,17 @@
 #include <vector>
 #include <string>
 
-#include "dirent.h"
+
+#ifndef LINUX
+	#include "dirent.h"
+#else
+	#include "/usr/include/dirent.h"
+#endif
+
+
 #include "helpers_sort.h"
 
-#include <opencv2\opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 bool getClassesNames(std::vector<std::string>& classes, std::string path);
 int getImList(std::vector<std::string>& imList, std::string path);

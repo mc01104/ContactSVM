@@ -96,7 +96,7 @@
 	template <class T>
 	void PrintVector(const ::std::vector<T>& vectorToBePrinted)
 	{
-		for(::std::vector<T>::const_iterator it = vectorToBePrinted.begin(); it !=  vectorToBePrinted.end(); ++it)
+		for(typename ::std::vector<T>::const_iterator it = vectorToBePrinted.begin(); it !=  vectorToBePrinted.end(); ++it)
 			::std::cout << *it << " ";
 
 		::std::cout << ::std::endl;
@@ -128,7 +128,7 @@
 	template <typename T>
 	::std::ostream& operator<<(::std::ostream& os, const ::std::vector<T>& toPrint)
 	{
-		for (::std::vector<T>::const_iterator it = toPrint.begin(); it != toPrint.end(); ++it)
+		for (typename ::std::vector<T>::const_iterator it = toPrint.begin(); it != toPrint.end(); ++it)
 			os << *it << " ";
 		os << ::std::endl;
 

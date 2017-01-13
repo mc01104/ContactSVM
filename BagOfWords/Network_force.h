@@ -1,3 +1,6 @@
+#ifndef LINUX
+
+
 #define _WINSOCKAPI_
 #include <windows.h> // Sleep
 
@@ -59,3 +62,5 @@ private:
 
 	::cv::KalmanFilter m_kalman;
 };
+
+#endif

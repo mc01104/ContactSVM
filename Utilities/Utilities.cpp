@@ -1,6 +1,9 @@
 #include "Utilities.h"
 
-#include <Windows.h>
+#ifndef LINUX
+	#include <Windows.h>
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -128,6 +131,7 @@ void PrintVec3(const Vec3& vecToPrint)
 	::std::cout << ::std::endl;
 }
 
+#ifndef LINUX
 std::wstring s2ws(const std::string& s)
 {
     int len;
@@ -139,6 +143,7 @@ std::wstring s2ws(const std::string& s)
     delete[] buf;
     return r;
 }
+#endif
 
 
 

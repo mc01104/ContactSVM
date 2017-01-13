@@ -1,3 +1,5 @@
+#ifndef LINUX
+
 #include "HTransform.h"
 
 	HTransform::HTransform():
@@ -93,3 +95,6 @@
 
 		return os; 
 	}
+
+
+#endif

@@ -101,7 +101,7 @@ bool BOW::trainBOW(::std::string path)
 	// list class names 
 	if (getClassesNames(m_classes, path))
 	{
-		for each (std::string className in m_classes)
+		for (std::string className : m_classes)
 		{
 			int count = getImList(m_imList, path + className);
 			for (int i=0;i<count;i++) m_classList.push_back(className);

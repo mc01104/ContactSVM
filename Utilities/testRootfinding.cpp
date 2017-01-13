@@ -1,3 +1,6 @@
+#ifndef LINUX
+
+
 #include "lwpr.hh"
 #include "Utilities.h"
 
@@ -148,3 +151,5 @@ void printEigMatrix(const Eigen::MatrixXd& matrixToBePrinted)
 	
 	std::cout << matrixToBePrinted.format(OctaveFmt) << sep;
 }
+
+#endif

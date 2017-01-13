@@ -1,3 +1,8 @@
+// TO be rewritten using boost to avoid system dependency !!
+
+
+#ifndef LINUX
+
 #include <opencv2\opencv.hpp>
 #include <opencv2\xfeatures2d\nonfree.hpp>
 #include <opencv2\features2d.hpp>
@@ -235,3 +240,5 @@ bool Network_force::processImages(void)
 	m_running = false;
 	return true;
 }
+
+#endif

@@ -10,6 +10,16 @@
 #ifndef DIRENT_H
 #define DIRENT_H
 
+
+
+#ifdef LINUX
+#include <dirent.h>
+#endif
+
+#ifndef LINUX
+
+
+
 /*
  * Define architecture flags so we don't need to include windows.h.
  * Avoiding windows.h makes it simpler to use windows sockets in conjunction
@@ -914,4 +924,7 @@ dirent_set_errno(
 }
 #endif
 #endif /*DIRENT_H*/
+
+
+#endif // LINUX
 
