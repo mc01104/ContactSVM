@@ -242,23 +242,28 @@ int main( int argc, char** argv )
 
 	BOW_l bow("FAST-LUCID");
 
-//    if (bow.trainBOW(train_path))
-//    {
-//        bow.SaveToFile(output_path);
-
-//        testBOW(test_path_contact,bow, true);
-//        ::cv::waitKey(0);
-//        testBOW(test_path_free,bow, true);
-//        ::cv::waitKey(0);
-
-//        //testBOW(test_path_contact,bow, true);
-//    }
-
-
-    if (bow.LoadFromFile(output_path))
+    if (bow.trainBOW(train_path))
     {
-        testBOW(test_path_surgery,bow, true, 10);
+        //bow.SaveToFile(output_path);
+
+        testBOW(validate_path_contact,bow, false);
+        ::cv::waitKey(0);
+        testBOW(validate_path_free,bow, false);
+        ::cv::waitKey(0);
+
+        //testBOW(test_path_contact,bow, true);
     }
+
+
+//    if (bow.LoadFromFile(output_path))
+//    {
+//        testBOW(test_path_contact,bow, false);
+//        ::cv::waitKey(0);
+//        testBOW(test_path_free,bow, false);
+//        ::cv::waitKey(0);
+
+//        //testBOW(test_path_surgery,bow, false, 1);
+//    }
 
 
 

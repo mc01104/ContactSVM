@@ -118,6 +118,7 @@ bool ParseOptions::isHeaderPresent(std::string name)
 bool ParseOptions::getData(std::string header_name, std::vector<std::string>& return_value)
 {
     return_value.clear();
+
     if (isHeaderPresent(header_name))
     {
         try
@@ -128,10 +129,10 @@ bool ParseOptions::getData(std::string header_name, std::vector<std::string>& re
             {
                 return_value.push_back(row[i]);
             }
+            return true;
         }
         catch(...)
         {
-            std::cout << "Error reading CSV data" << std::endl;
             return false;
         }
     }
@@ -154,6 +155,7 @@ bool ParseOptions::getData(std::string header_name, std::vector<float>& return_v
             {
                 return_value.push_back(stof(row[i]));
             }
+            return true;
 
         }
         catch(...)
