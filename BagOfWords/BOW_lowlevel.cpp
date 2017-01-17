@@ -40,8 +40,8 @@ BOW_l::BOW_l(std::string features)
 	}
 	else if (features =="FAST-LUCID") // Fast and good performance
 	{ 
-        m_featureDetector =  cv::FastFeatureDetector::create(10,true,2);
-        m_descriptorExtractor = cv::xfeatures2d::LUCID::create(3,2);
+        m_featureDetector =  cv::FastFeatureDetector::create(5,true,2);
+        m_descriptorExtractor = cv::xfeatures2d::LUCID::create(3,1);
 	}
 	else if (features =="FREAK") // not very good perf
 	{
@@ -65,7 +65,7 @@ BOW_l::BOW_l(std::string features)
 		m_descriptorExtractor = cv::BRISK::create(); 
 	}
 
-	m_dictionarySize = 10000;
+    m_dictionarySize = 60;
 	m_tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
 	int retries = 1;
 	int flags = ::cv::KMEANS_PP_CENTERS;
@@ -240,7 +240,7 @@ bool BOW_l::trainBOW(::std::string path)
 	}
 
 	// kmeans cluster to construct the vocabulary
-    int k = 50;
+    int k = m_dictionarySize;
 	::cv::kmeans(training_descriptors, k, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
 
 

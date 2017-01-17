@@ -199,7 +199,7 @@ int main( int argc, char** argv )
 
 
     // path of surgery images
-    ::std::string test_path_surgery =  base_folder_surgeries + "/2016-07-28_12-24-43/"; // "\\2016-07-28_12-24-43\\"
+    ::std::string test_path_surgery =  base_folder_surgeries + "/"; // + "/2016-07-28_12-24-43/"; // "\\2016-07-28_12-24-43\\"
 	if(cmdOptionExists(argv, argv+argc, "-i"))
     {
 		char * inputfile = getCmdOption(argv, argv + argc, "-i");
@@ -244,8 +244,9 @@ int main( int argc, char** argv )
 
     if (bow.trainBOW(train_path))
     {
-        //bow.SaveToFile(output_path);
+        bow.SaveToFile(output_path);
 
+//        testBOW(test_path_surgery,bow, false, 1);
         testBOW(validate_path_contact,bow, false);
         ::cv::waitKey(0);
         testBOW(validate_path_free,bow, false);
@@ -262,7 +263,7 @@ int main( int argc, char** argv )
 //        testBOW(test_path_free,bow, false);
 //        ::cv::waitKey(0);
 
-//        //testBOW(test_path_surgery,bow, false, 1);
+//        testBOW(test_path_surgery,bow, false, 1);
 //    }
 
 
