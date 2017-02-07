@@ -4,7 +4,7 @@
 #include <chrono>
 
 
-BOW_l::BOW_l(std::string features)
+BOW_l::BOW_l(std::string features, int dictionarySize)
 {
 
 
@@ -40,9 +40,14 @@ BOW_l::BOW_l(std::string features)
 	}
 	else if (features =="FAST-LUCID") // Fast and good performance
 	{ 
+        m_featureDetector =  cv::FastFeatureDetector::create();
+        m_descriptorExtractor = cv::xfeatures2d::LUCID::create(2,1);
+    }
+    else if (features =="FAST-LUCID_NEW") // Fast and good performance
+    {
         m_featureDetector =  cv::FastFeatureDetector::create(5,true,2);
         m_descriptorExtractor = cv::xfeatures2d::LUCID::create(3,1);
-	}
+    }
 	else if (features =="FREAK") // not very good perf
 	{
 		m_featureDetector =  cv::FastFeatureDetector::create();
@@ -65,7 +70,7 @@ BOW_l::BOW_l(std::string features)
 		m_descriptorExtractor = cv::BRISK::create(); 
 	}
 
-    m_dictionarySize = 60;
+    m_dictionarySize = dictionarySize;
 	m_tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
 	int retries = 1;
 	int flags = ::cv::KMEANS_PP_CENTERS;
@@ -96,7 +101,8 @@ bool BOW_l::LoadFromFile(::std::string path)
 		storage["vocabulary"] >> m_vocabulary;
 		storage.release();  
 
-		//m_bowide->setVocabulary(m_vocabulary);
+        m_dictionarySize = m_vocabulary.rows;
+
 
 		std::vector<int> v_word_labels;
 		for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
@@ -123,15 +129,14 @@ bool BOW_l::LoadFromFile(::std::string path)
 			m_classes.push_back((::std::string)*it);
 		storage.release();   
 
-		m_trained = true;
-		return true;
+        m_trained = true;
 	}
 	catch ( const std::exception & e ) 
 	{
 		::std::cerr << e.what();
-		m_trained = false;
-		return false;
+        m_trained = false;
 	}
+    return m_trained;
 }
 
 
@@ -359,43 +364,28 @@ Returns true if there was no runtime error during prediction
 */
 bool BOW_l::predictBOW(::cv::Mat img, float& response)
 {
-
 	if (!m_trained) return false;
 
 	std::vector<cv::KeyPoint> keyPoints;
-	::cv::Mat descriptors;
-	::cv::Mat bowDescriptor;	
+    ::cv::Mat descriptors;
 	::cv::Mat wordsInImg;
+
 
 	std::vector<int> v_word_labels;
 	for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
 
+
 	m_featureDetector->detect(img, keyPoints);
-
-
-	//cv::KeyPointsFilter::retainBest(keyPoints, 10);
-	
-	//::std::cout << keyPoints.size() << "---" << ::std::endl;
-
 	m_descriptorExtractor->compute(img, keyPoints,descriptors);
-	
 	
 
 	// put descriptors in right format for kmeans clustering
 	if(descriptors.type()!=CV_32F) {
 		descriptors.convertTo(descriptors, CV_32F); 
 	}
-	
-
-	
-	::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
 
 	// Vector quantization of words in image
-	m_knn->findNearest(descriptors,1,wordsInImg);  // less than 1 ms here
-	
-	::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
-	std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds> (t2-t1);
-	//std::cout << ms.count()  << ::std::endl;
+    m_knn->findNearest(descriptors,1,wordsInImg);
 	
 	// construction of response histogram
 	::std::vector<float> temp(m_vocabulary.rows, 0.0);

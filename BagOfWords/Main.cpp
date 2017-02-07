@@ -199,7 +199,7 @@ int main( int argc, char** argv )
 
 
     // path of surgery images
-    ::std::string test_path_surgery =  base_folder_surgeries + "/"; // + "/2016-07-28_12-24-43/"; // "\\2016-07-28_12-24-43\\"
+    ::std::string test_path_surgery =  base_folder_surgeries + "/2017-01-26_12-42-26/"; // + "/2016-07-28_12-24-43/"; // "\\2016-07-28_12-24-43\\"
 	if(cmdOptionExists(argv, argv+argc, "-i"))
     {
 		char * inputfile = getCmdOption(argv, argv + argc, "-i");
@@ -238,67 +238,39 @@ int main( int argc, char** argv )
     }
 
 
-    // This is where the fun begins !!!
-
-	BOW_l bow("FAST-LUCID");
-
-    if (bow.trainBOW(train_path))
-    {
-        bow.SaveToFile(output_path);
-
-//        testBOW(test_path_surgery,bow, false, 1);
-        testBOW(validate_path_contact,bow, false);
-        ::cv::waitKey(0);
-        testBOW(validate_path_free,bow, false);
-        ::cv::waitKey(0);
-
-        //testBOW(test_path_contact,bow, true);
-    }
 
 
-//    if (bow.LoadFromFile(output_path))
+    BOW_l bow("FAST-LUCID", 50);
+
+
+//    if (bow.trainBOW(train_path))
 //    {
+//        bow.SaveToFile(output_path);
+
+//        //testBOW(test_path_surgery,bow, false);
+//        //::cv::waitKey(0);
+
+//        testBOW(validate_path_contact,bow, false);
+//        ::cv::waitKey(0);
+//        testBOW(validate_path_free,bow, false);
+//        ::cv::waitKey(0);
+
+//        //testBOW(test_path_contact,bow, true);
+//    }
+
+
+    if (bow.LoadFromFile(output_path))
+    {
 //        testBOW(test_path_contact,bow, false);
 //        ::cv::waitKey(0);
 //        testBOW(test_path_free,bow, false);
 //        ::cv::waitKey(0);
 
-//        testBOW(test_path_surgery,bow, false, 1);
-//    }
+        testBOW(test_path_surgery,bow, true, 1);
+    }
 
 
 
-    // legacy code kepts as an example
-	//if (bow.trainBOW(train_path))
-	//{
-	//	bow.SaveToFile(output_path);
-
-	//	/*::std::cout << "Test with Contact" << ::std::endl;
-	//	testBOW(test_path_contact,bow);
-
-	//	::std::cout << "Test with Free file" << ::std::endl;
-	//	testBOW(test_path_free,bow);*/
-	//}
-
-	//::std::cout << "Load from file test" << ::std::endl;
-	//if (bow.LoadFromFile(output_path)) 
-	//{
-	//	/*::std::cout << "Test with Contact" << ::std::endl;
-	//	testBOW(test_path_contact,bow, true);
-
-	//	::std::cout << "Test with Free file" << ::std::endl;
-	//	testBOW(test_path_free,bow, true);*/
-
-	//	testBOW(test_path_surgery,bow, true);
-	//}
-	//else 
-	//{
-	//	::std::cout << "Error in BOW loading" << ::std::endl;
-	//}
-
-	/*Network_force testForce(output_path,test_path_surgery);
-	testForce.setForceGain(gain);
-	testForce.runThreads();*/
 
     //system("pause");
 	return 0;

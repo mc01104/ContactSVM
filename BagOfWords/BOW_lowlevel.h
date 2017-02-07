@@ -15,7 +15,7 @@
 class BOW_l
 {
 public:
-	BOW_l(std::string features = "FAST-LUCID");
+    BOW_l(std::string features = "FAST-LUCID_NEW", int dictionarySize = 60);
 	~BOW_l();
 
 	bool LoadFromFile(::std::string path);
