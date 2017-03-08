@@ -16,7 +16,8 @@
 #include "Network_force.h"
 #include "helper_parseopts.h"
 
-
+void processVideo();
+void classifierTest();
 /*bool testBOW(std::string path, BOW_l bow)
 {
 
@@ -34,9 +35,102 @@
 	return true;
 }*/
 
+void processVideo()
+{
+	// Load video
+	::std::string filename = "C:\\Users\\RC\\Dropbox\\PVL_robot\\Classifier_test_experiment\\2017-01-26_12-46-26_CR04.mp4";
+	::cv::VideoCapture v(filename);
+	double num_of_frames = v.get(CV_CAP_PROP_FRAME_COUNT); 
 
+	::std::cout << num_of_frames << ::std::endl;
+	//::std::string output_path = "F:\\clparams\\output_";
+	//::std::string output_path = "C:\\Users\\RC\Dropbox\\shared_harvard\\classifiers\\class_1\\output_";
+	::std::string output_path = "C:\\PASS\\clparams\\output_";
+	//::std::string output_for_images = "C:\\Users\\RC\\Dropbox\\Videos\\processed_videos\\clas-cr04\\";
+	// Load classifier
+	BOW_l bow("FAST-LUCID");
+	//BOW_l bow;
+	
+	bow.LoadFromFile(output_path);
+	::std::vector<::std::string> classes = bow.getClasses();
 
-bool testBOW(std::string path, BOW_l bow, bool visualization = false)
+	//::std::ofstream contactStream("C:\\Users\\RC\\Dropbox\\Videos\\processed_videos\\ctr_nav_cr_06\\contact_data.txt");
+
+	bool framesLeft = true;
+	::cv::Mat frame;
+	::cv::namedWindow("MyVideo",CV_WINDOW_AUTOSIZE);
+
+	float response = 0.0;
+	::std::vector<int> responses;
+	char output_filename[100];
+	int counter = 0;
+
+	::std::string final_output;
+    for (int i = 0; i < num_of_frames; ++i)
+    {
+        framesLeft = v.read(frame); 
+
+		if (!bow.predictBOW(frame,response))
+			::std::cout << "Classifier failed to estimate contact" << ::std::endl;
+
+		if (classes[(int) response] == "Free")
+			response = 0.0;
+		else 
+			response = 1.0;
+		
+		responses.push_back(response);
+
+		::cv::Point center(20,50);
+		::cv::Scalar color(0,255,255);
+
+		if (response == 1)
+			::cv::circle(frame, center, 10, color, -1);
+
+		//sprintf(output_filename,"image_%010d.png", ++counter);
+		//final_output = output_for_images + output_filename;
+
+		//::std::cout << output_filename << ::std::endl;
+		//::cv::imwrite(final_output, frame);
+		//contactStream << response << ::std::endl;
+		::std::cout << "response:" << response << ::std::endl;
+        imshow("MyVideo", frame);          
+        if(::cv::waitKey(0) == 27) break;
+    }
+
+	//contactStream.close();
+}
+
+void classifierTest()
+{
+	BOW_l bow("FAST-LUCID"); //I made a constructor which takes the vocabulary size as a parameter in the linux_compilation branch, but it defaults anyway to 50 in the main branch. You should use BOW_l bow("FAST-LUCID"); in your version of the code, or checkout the linux_compilation branch, but there are hardcoded paths and stuff like this that I did not cleanup
+
+	::std::string train_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\train\\";
+	//::std::string output_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\results\\";
+	::std::string output_path = "C:\\Users\\RC\\Downloads\\Classifier_test_dataset\\";
+	::std::string validate_path_contact = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\validate\\Contact\\";
+	::std::string validate_path_free = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\validate\\Free\\";
+
+	//if (bow.trainBOW(train_path))
+	//{
+	//	bow.SaveToFile(output_path);
+
+	//	testBOW(validate_path_contact,bow, false);
+
+	//	testBOW(validate_path_free,bow, false);
+	//}
+
+	BOW_l bow2("FAST-LUCID");
+
+	if (bow2.LoadFromFile(output_path))
+	{
+		testBOW(validate_path_contact,bow2, false);
+
+		testBOW(validate_path_free,bow2, false);
+
+	}
+}
+
+bool testBOW(std::string path, BOW_l bow, bool visualization)
 {
 
 	::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
@@ -90,8 +184,7 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 
 			average_val = (average_val*5.0 - popped + response)/5.0;
 
-			*/
-			reponses.push_back(response);
+			reponses.push_back(response);*/
 
 			if(visualization)
 			{
@@ -105,12 +198,6 @@ bool testBOW(std::string path, BOW_l bow, bool visualization = false)
 		}
 		else ::std::cout << "Error in prediction" << ::std::endl;
 	}
-
-	
-	::std::string fname = path + "contact_values.xml";
-	cv::FileStorage fs(fname, cv::FileStorage::WRITE);        
-	fs << "contact" << reponses;
-	fs.release();
 
 	std::cout << "Number of images: " << imList.size() << ::std::endl;
 	std::cout << "Percent of contact: " << response_contact*1.0/imList.size() << ::std::endl;
@@ -154,119 +241,115 @@ void testBOWFeature(std::string feature, std::string train_path, std::string tes
 int main( int argc, char** argv )
 {
 
-	std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Surgery_dev\\";
+	processVideo();
+	//classifierTest();
+	//std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Surgery_dev\\";
 
-	std::string train_path = base_folder + "train\\";
+	//std::string train_path = base_folder + "train\\";
 
-	std::string test_path_contact = base_folder + "validate\\Contact\\";
-	std::string test_path_free =  base_folder + "validate\\Free\\";
+	//std::string test_path_contact = base_folder + "validate\\Contact\\";
+	//std::string test_path_free =  base_folder + "validate\\Free\\";
 
-	::std::string test_path_surgery =  base_folder + "..\\..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
-	test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-24-43\\";
-
-
-	::std::string example_surgery_path = base_folder + "..\\Example_surgery_video\\";
-
-	example_surgery_path =  base_folder + "..\\..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
-
+	//::std::string test_path_surgery =  base_folder + "..\\..\\2016-05-26_Bypass_Cardioscopy\\Awaiba_Surgery_20160526\\2016-05-26_14-10-11\\";
+	//test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-24-43\\";
 	//test_path_surgery = base_folder + "..\\..\\2016-07-28_Bypass_cardioscopy\\CameraImages_Surgery_07282016\\2016-07-28_12-10-26\\";
-	//test_path_surgery = base_folder + "..\\ExtractedImages_paper\\";
+	////test_path_surgery = base_folder + "..\\ExtractedImages_paper\\";
 
-	std::string output_path = base_folder + "output_";
+	//std::string output_path = base_folder + "output_";
 
-	std::string ip = "192.168.0.12";
+	//std::string ip = "192.168.0.12";
 
-	float gain = 3.0;
-
-
-	if(cmdOptionExists(argv, argv+argc, "-i"))
-    {
-		char * inputfile = getCmdOption(argv, argv + argc, "-i");
-		test_path_surgery  = ::std::string(inputfile);
-    }
-
-	if(cmdOptionExists(argv, argv+argc, "-s"))
-    {
-		char * outputfile = getCmdOption(argv, argv + argc, "-s");
-		output_path  = ::std::string(outputfile);
-    }
-
-	if(cmdOptionExists(argv, argv+argc, "-ip"))
-    {
-		char * s_ip = getCmdOption(argv, argv + argc, "-ip");
-		ip  = ::std::string(s_ip);
-    }
-
-	if(cmdOptionExists(argv, argv+argc, "-g"))
-    {
-		char * s_gain = getCmdOption(argv, argv + argc, "-g");
-		try { gain  = atof(s_gain); }
-		catch ( const std::exception & e ) { gain = 3.0;}
-    }
-
-	if(cmdOptionExists(argv, argv+argc, "-h"))
-    {
-		std::cout << "Command line options are: \n -i for input path of image files \n -s for basepath of saved SVM files \n -ip to set the IP address of the server \n -g to set the force gain" << ::std::endl;
-		return 0;
-    }
+	//float gain = 3.0;
 
 
-	/*testBOWFeature("SURF", train_path, test_path_contact, test_path_free);
-	testBOWFeature("FAST-SURF", train_path, test_path_contact, test_path_free);
-	testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
-	*/
+	//if(cmdOptionExists(argv, argv+argc, "-i"))
+ //   {
+	//	char * inputfile = getCmdOption(argv, argv + argc, "-i");
+	//	test_path_surgery  = ::std::string(inputfile);
+ //   }
 
+	//if(cmdOptionExists(argv, argv+argc, "-s"))
+ //   {
+	//	char * outputfile = getCmdOption(argv, argv + argc, "-s");
+	//	output_path  = ::std::string(outputfile);
+ //   }
+
+	//if(cmdOptionExists(argv, argv+argc, "-ip"))
+ //   {
+	//	char * s_ip = getCmdOption(argv, argv + argc, "-ip");
+	//	ip  = ::std::string(s_ip);
+ //   }
+
+	//if(cmdOptionExists(argv, argv+argc, "-g"))
+ //   {
+	//	char * s_gain = getCmdOption(argv, argv + argc, "-g");
+	//	try { gain  = atof(s_gain); }
+	//	catch ( const std::exception & e ) { gain = 3.0;}
+ //   }
+
+	//if(cmdOptionExists(argv, argv+argc, "-h"))
+ //   {
+	//	std::cout << "Command line options are: \n -i for input path of image files \n -s for basepath of saved SVM files \n -ip to set the IP address of the server \n -g to set the force gain" << ::std::endl;
+	//	return 0;
+ //   }
+
+
+	///*testBOWFeature("SURF", train_path, test_path_contact, test_path_free);
+	//testBOWFeature("FAST-SURF", train_path, test_path_contact, test_path_free);
 	//testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
+	//*/
 
-	//system("pause");
+	////testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
 
-	BOW_l bow("FAST-LUCID");
+	////system("pause");
 
-	/*if (bow.trainBOW(train_path))
-	{
-		//bow.SaveToFile(output_path);
+	//BOW_l bow("FAST-LUCID");
 
-		testBOW(test_path_surgery,bow, false);
-	}*/
-
-	if (bow.LoadFromFile(output_path)) 
-	{
-		testBOW(example_surgery_path,bow, false);
-
-		//testBOW(test_path_free,bow, true);
-	}
-
-	//if (bow.trainBOW(train_path))
+	///*if (bow.trainBOW(train_path))
 	//{
-	//	bow.SaveToFile(output_path);
+	//	//bow.SaveToFile(output_path);
 
-	//	/*::std::cout << "Test with Contact" << ::std::endl;
-	//	testBOW(test_path_contact,bow);
+	//	testBOW(test_path_surgery,bow, false);
+	//}*/
 
-	//	::std::cout << "Test with Free file" << ::std::endl;
-	//	testBOW(test_path_free,bow);*/
-	//}
-
-	//::std::cout << "Load from file test" << ::std::endl;
 	//if (bow.LoadFromFile(output_path)) 
 	//{
-	//	/*::std::cout << "Test with Contact" << ::std::endl;
 	//	testBOW(test_path_contact,bow, true);
 
-	//	::std::cout << "Test with Free file" << ::std::endl;
-	//	testBOW(test_path_free,bow, true);*/
-
-	//	testBOW(test_path_surgery,bow, true);
-	//}
-	//else 
-	//{
-	//	::std::cout << "Error in BOW loading" << ::std::endl;
+	//	testBOW(test_path_free,bow, true);
 	//}
 
-	/*Network_force testForce(output_path,test_path_surgery);
-	testForce.setForceGain(gain);
-	testForce.runThreads();*/
+	////if (bow.trainBOW(train_path))
+	////{
+	////	bow.SaveToFile(output_path);
 
-	system("pause");
+	////	/*::std::cout << "Test with Contact" << ::std::endl;
+	////	testBOW(test_path_contact,bow);
+
+	////	::std::cout << "Test with Free file" << ::std::endl;
+	////	testBOW(test_path_free,bow);*/
+	////}
+
+	////::std::cout << "Load from file test" << ::std::endl;
+	////if (bow.LoadFromFile(output_path)) 
+	////{
+	////	/*::std::cout << "Test with Contact" << ::std::endl;
+	////	testBOW(test_path_contact,bow, true);
+
+	////	::std::cout << "Test with Free file" << ::std::endl;
+	////	testBOW(test_path_free,bow, true);*/
+
+	////	testBOW(test_path_surgery,bow, true);
+	////}
+	////else 
+	////{
+	////	::std::cout << "Error in BOW loading" << ::std::endl;
+	////}
+
+	///*Network_force testForce(output_path,test_path_surgery);
+	//testForce.setForceGain(gain);
+	//testForce.runThreads();*/
+
+	//system("pause");
 	return 0;
 }

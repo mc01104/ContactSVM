@@ -40,7 +40,7 @@ BOW_l::BOW_l(std::string features)
 	}
 	else if (features =="FAST-LUCID") // Fast and good performance
 	{ 
-		m_featureDetector =  cv::FastFeatureDetector::create(10,true,2);
+		m_featureDetector =  cv::FastFeatureDetector::create();
 		m_descriptorExtractor = cv::xfeatures2d::LUCID::create(2,1);
 	}
 	else if (features =="FREAK") // not very good perf
@@ -65,7 +65,8 @@ BOW_l::BOW_l(std::string features)
 		m_descriptorExtractor = cv::BRISK::create(); 
 	}
 
-	m_dictionarySize = 10000;
+	m_dictionarySize = 50;
+
 	m_tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
 	int retries = 1;
 	int flags = ::cv::KMEANS_PP_CENTERS;
@@ -395,7 +396,7 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
 	
 	::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
 	std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds> (t2-t1);
-	//std::cout << ms.count()  << ::std::endl;
+	std::cout << ms.count()  << ::std::endl;
 	
 	// construction of response histogram
 	::std::vector<float> temp(m_vocabulary.rows, 0.0);
