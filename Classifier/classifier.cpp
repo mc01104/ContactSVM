@@ -231,18 +231,18 @@ bool BagOfFeatures::predict(const ::cv::Mat* const img, float& response) const
 
 void BagOfFeatures::initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure)
 {
-		m_knn = ::cv::ml::KNearest::create();
-		m_knn->setAlgorithmType(KNNSearchDataStructure);
+	m_knn = ::cv::ml::KNearest::create();
+	m_knn->setAlgorithmType(KNNSearchDataStructure);
 
-		::cv::Mat mat_words_labels(m_vocabulary.rows, 1, CV_32S);
+	::cv::Mat mat_words_labels(m_vocabulary.rows, 1, CV_32S);
 
-		for (int i=0;i<m_vocabulary.rows;i++) 
-			mat_words_labels.at<int>(i) = i;
+	for (int i=0;i<m_vocabulary.rows;i++) 
+		mat_words_labels.at<int>(i) = i;
 
-		m_knn->clear();
-		m_knn->setDefaultK(1);
+	m_knn->clear();
+	m_knn->setDefaultK(1);
 
-		m_knn->train(m_vocabulary, ::cv::ml::ROW_SAMPLE, mat_words_labels);
+	m_knn->train(m_vocabulary, ::cv::ml::ROW_SAMPLE, mat_words_labels);
 
 }
 
