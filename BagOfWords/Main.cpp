@@ -208,8 +208,18 @@ bool testBOW(std::string path, BOW_l bow, bool visualization, int delay, bool sa
 }
 
 
-/*
- * Overloaded function using the new BagOfFeatures class
+/**
+ * @brief: Test the classifier with a list of images (overloaded function using the new BagOfFeatures class)
+ *
+ * @author: Ben & George
+ *
+ * \param[in] path - path to the directory containing the test images
+ * \param[in] bow - the BagOfFeatures classifier
+ * \param[in] visualization - visualize the classified images in an opencv window
+ * \param[in] delay - delay during visualization (defaults to 1). O makes it pause at each image waiting keyboard input
+ * \param[in] saveOutput - save classifier output in an XML file in the "path" directory
+ *
+ * Outputs only true for now, should be enhanced to handle errors and exceptions ...
  * */
 bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay, bool saveOutput)
 {
@@ -296,17 +306,23 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
 }
 
 
-/*
- * Process images from csvFile
+/**
+ * @brief: Process images using parameters described in a CSV file
+ *
  * The CSV file should contain two fields:
  *      - base_folder: folder where the classifier files and the dataset is (in test/train/validate folders)
  *      - folder_surgeries: base folder with images from surgeries
  *
- * Arguments:
- *      ::std::string csvFilePath the path to the CSV file
- *      bool trainSVM - train the SVM if true, load from file otherwise. Defaults to true
- *      bool visualize - visualize the classifier output in a window or not. Defaults to false
- *      int testType - 0 for surgery images, 1 for validate dataset, 2 for test dataset. Defaults to 0
+ * For now, only pre-trained classifier than can be loaded from XML files is implemented
+ *
+ * @author: Ben & George
+ *
+ * \param[in] csvFilePath - the path to the CSV file
+ * \param[in] trainSVM - train the SVM if true, load from file otherwise. Defaults to true
+ * \param[in] visualize - visualize the classifier output in a window or not. Defaults to false
+ * \param[in] testType - 0 for surgery images, 1 for validate dataset, 2 for test dataset. Defaults to 0
+ *
+ * \return true if no error occured
  * */
 bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize, int testType)
 {
@@ -349,9 +365,18 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize, i
 
     BagOfFeatures bow;
 
-    /*if ((trainSVM) && (!  (bow.trainBOW(train_path)) ))
-        return false;
-    */
+
+    // TODO: implement function reading the directory to extract the list of images and their labels
+    // Equivalent in Bow_lowlevel is the trainBow function
+
+    /*if ((trainSVM)
+    {
+        ::std::vector< cv::Mat*> imgs;
+        getImagesFromPath(imgs,train_path);
+        if (!(bow.train(train_path)) )
+            return false;
+    }*/
+
 
     if (! (bow.load(output_path)) )
         return false;

@@ -17,6 +17,7 @@
 
 bool getClassesNames(std::vector<std::string>& classes, std::string path);
 int getImList(std::vector<std::string>& imList, std::string path);
+int getImagesFromPath(std::vector<cv::Mat*>& imVector, std::string path);
 
 
 template <typename T>

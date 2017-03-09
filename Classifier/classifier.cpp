@@ -55,6 +55,22 @@ BagOfFeatures::~BagOfFeatures()
 }
 
 
+/**
+ * @brief: Load a BagOfFeatures classifier from a set of XML files
+ *
+ * The XML files are :
+ *      VOC.xml - the BOF vocabulary
+ *      KNN.xml - the trained k-nearest-neighbor (optional)
+ *      SVM.xml - the trained SVM parameters and decision functions
+ *      SCALE_[means,std].xml - the scaling parameters
+ *      CLASSES.xml - names of the classes in the classifier
+ *
+ * @author: Ben & George
+ *
+ * \param[in] path_to_classifier_files - the path to the directory containing the classifier XMLs
+ *
+ * \return true if the BOF classifier was correctly loaded and no error occured
+ * */
 bool BagOfFeatures::load(const ::std::string& path_to_classifier_files) 
 {
 	try
@@ -110,6 +126,18 @@ bool BagOfFeatures::load(const ::std::string& path_to_classifier_files)
 
 }
 
+
+/**
+ * @brief: Save a BagOfFeatures classifier to a set of XML files
+ *
+ * The XML files are the same as in the BagOfFeatures::load function
+ *
+ * @author: Ben & George
+ *
+ * \param[in] path_to_classifier_files - the path to the directory containing the classifier XMLs
+ *
+ * \return true if the BOF classifier was correctly saved and no error occured
+ * */
 bool BagOfFeatures::save(const ::std::string& path_to_classifier_files)
 {
 	try
@@ -146,6 +174,16 @@ bool BagOfFeatures::save(const ::std::string& path_to_classifier_files)
 	}
 }
 
+/**
+ * @brief: Train a BagOfFeatures classifier
+ *
+ * @author: Ben & George
+ *
+ * \param[in] imgs - a vector of cv::Mat* elements containing the training images
+ * \param[in] labels - a vector containing the class labels associated with the training images
+ *
+ * \return true if the BOF classifier was correctly trained
+ * */
 bool BagOfFeatures::train(::std::vector<::cv::Mat*> imgs, ::std::vector<float>& labels)
 {
 	
@@ -173,6 +211,17 @@ bool BagOfFeatures::train(::std::vector<::cv::Mat*> imgs, ::std::vector<float>& 
 
 }
 
+
+/**
+ * @brief: Predict the class of a given input image
+ *
+ * @author: Ben & George
+ *
+ * \param[in] img - a cv::Mat* input image
+ * \param[in,out] response - the class predicted by the BOF classifier
+ *
+ * \return true if the BOF classifier was correctly trained
+ * */
 bool BagOfFeatures::predict(const ::cv::Mat* const img, float& response) const
 {
 	if (!m_trained) 
@@ -231,13 +280,27 @@ bool BagOfFeatures::predict(const ::cv::Mat* const img, float& response) const
 }
 
 
+/**
+ * @brief: Accessor method to get the list of classes in the BOF classifier
+ *
+ * @author: Ben & George
+ *
+ * \return a vector of strings containing the classes
+ * */
 ::std::vector< ::std::string> BagOfFeatures::getClasses()
 {
     return m_classes;
 }
 
 
-
+/**
+ * @brief: Initialize the K-Nearest-Neighbor
+ *
+ * @author: Ben & George
+ *
+ * \param[in] KNNSearchDataStructure - the type of KNN. 1 is BruteForce and 2 is KDTree. KDTree implementation is currently broken
+ *
+ * */
 void BagOfFeatures::initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure)
 {
 	m_knn = ::cv::ml::KNearest::create();
@@ -255,6 +318,16 @@ void BagOfFeatures::initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructu
 
 }
 
+
+/**
+ * @brief: Extract image features
+ *
+ * @author: Ben & George
+ *
+ * \param[in] imgs - a vector of openCV images
+ * \param[in,out] image_number - a vector making the correspondence between the descriptors and the input image they belong to
+ * \param[in,out] training_descriptors - a cv::Mat with all descriptors from all images stacked vertically
+ * */
 void BagOfFeatures::featureExtraction(const ::std::vector<::cv::Mat*>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors)
 {
 	if (training_descriptors.size > 0)
@@ -282,6 +355,17 @@ void BagOfFeatures::featureExtraction(const ::std::vector<::cv::Mat*>& imgs, ::s
 
 }
 
+
+/**
+ * @brief: Compute the response histogram for given input images
+ *
+ * @author: Ben & George
+ *
+ * \param[in] imgs - a vector of openCV images
+ * \param[in] cluster_labels - labels of the words in vocabulary, clustered by the KNN algorithm
+ * \param[in] image_number - a vector making the correspondence between the cluster_labels and the input image they belong to
+ * \param[in,out] im_histograms - scaled response histograms for each image in imgs
+ * */
 void BagOfFeatures::computeResponseHistogram(const ::std::vector<::cv::Mat*> imgs, const ::cv::Mat& cluster_labels, const ::std::vector<int>& image_number, ::cv::Mat& im_histograms)
 {
 	::std::vector<float> temp(m_dictionarySize, 0.0);

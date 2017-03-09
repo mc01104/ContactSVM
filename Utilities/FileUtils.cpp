@@ -6,7 +6,6 @@
 #include <vector>
 
 
-
 bool getClassesNames(std::vector<std::string>& classes, std::string path)
 {
 	
@@ -49,4 +48,34 @@ int getImList(std::vector<std::string>& imList, std::string path)
 		return count;
 	}
 	return count;
+}
+
+
+
+int getImagesFromPath(std::vector<cv::Mat*>& imVector, std::string path)
+{
+    int count = 0;
+    // Read files in the input folder
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir (path.c_str())) != NULL) {
+        /* print all the files and directories within directory */
+        while ((ent = readdir (dir)) != NULL) {
+            std::string file(ent->d_name);
+
+            std::size_t found = file.find(".png");
+            if (found!=std::string::npos)
+            {
+                std::string filepath = path + "/" + file;
+                ::cv::Mat img = ::cv::imread(filepath);
+
+                imVector.push_back(&img);
+                count++;
+            }
+        }
+        closedir (dir);
+    } else {
+        return count;
+    }
+    return count;
 }
