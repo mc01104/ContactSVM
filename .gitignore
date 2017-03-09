@@ -238,3 +238,9 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
+
+# George
+*.png
+*.db
+*.avi
+*.xml

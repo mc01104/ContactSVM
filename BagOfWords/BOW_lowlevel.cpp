@@ -370,7 +370,6 @@ bool BOW_l::predictBOW(::cv::Mat img, float& response)
     ::cv::Mat descriptors;
 	::cv::Mat wordsInImg;
 
-
 	std::vector<int> v_word_labels;
 	for (int i=0;i<m_vocabulary.rows;i++) v_word_labels.push_back(i);
 

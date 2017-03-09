@@ -10,6 +10,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utilities", "Utilities\Util
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BagOfWords", "BagOfWords\BagOfWords.vcxproj", "{B34E6333-7EB5-4201-9CF7-AAD7700F66C4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Classifier", "Classifier\Classifier.vcxproj", "{1511E745-FAB6-4E39-B41F-AD11773D1B3B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -56,6 +58,18 @@ Global
 		{B34E6333-7EB5-4201-9CF7-AAD7700F66C4}.Release|Win32.Build.0 = Release|Win32
 		{B34E6333-7EB5-4201-9CF7-AAD7700F66C4}.Release|x64.ActiveCfg = Release|x64
 		{B34E6333-7EB5-4201-9CF7-AAD7700F66C4}.Release|x64.Build.0 = Release|x64
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Debug|Win32.Build.0 = Debug|Win32
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Debug|x64.ActiveCfg = Debug|x64
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Debug|x64.Build.0 = Debug|x64
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Release|Win32.ActiveCfg = Release|Win32
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Release|Win32.Build.0 = Release|Win32
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Release|x64.ActiveCfg = Release|x64
+		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
