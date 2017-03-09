@@ -12,3 +12,6 @@ bool predictBOW(std::string path, ::cv::Ptr< ::cv::ml::SVM> svm, ::cv::Mat vocab
 bool testBOW(std::string path, ::cv::Ptr< ::cv::ml::SVM> svm, ::cv::Mat vocabulary);
 bool testBOW(std::string path, BOW_l bow, bool visualization = false, int delay = 1);
 bool processFromFile(::std::string csvFilePath, bool trainSVM = true, bool visualize = false, int testType = 0);
+
+void processVideo();
+void classifierTest();
