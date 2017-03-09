@@ -78,7 +78,7 @@ bool BagOfFeatures::load(const ::std::string& path_to_classifier_files)
 		// Load SVM parameters
 		m_svm = ::cv::ml::StatModel::load<::cv::ml::SVM>(path_to_classifier_files + "SVM.xml");
 
-		// Ben is that correct???
+        // Get dictionary size from loaded vocabulary #rows
 		m_dictionarySize = m_vocabulary.rows;
 
 		storage = ::cv::FileStorage(path_to_classifier_files + "SCALE_means.xml", cv::FileStorage::READ);
@@ -230,10 +230,18 @@ bool BagOfFeatures::predict(const ::cv::Mat* const img, float& response) const
 	}
 }
 
+
+::std::vector< ::std::string> BagOfFeatures::getClasses()
+{
+    return m_classes;
+}
+
+
+
 void BagOfFeatures::initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure)
 {
 	m_knn = ::cv::ml::KNearest::create();
-	m_knn->setAlgorithmType(KNNSearchDataStructure);
+    m_knn->setAlgorithmType(KNNSearchDataStructure);
 
 	::cv::Mat mat_words_labels(m_vocabulary.rows, 1, CV_32S);
 

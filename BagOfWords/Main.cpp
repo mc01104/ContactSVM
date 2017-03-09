@@ -21,8 +21,6 @@
 #include "CSV_reader.h"
 
 
-#include "Classifier.h"
-
 
 void processVideo()
 {
@@ -122,7 +120,7 @@ void classifierTest()
 	}
 }
 
-bool testBOW(std::string path, BOW_l bow, bool visualization, int delay)
+bool testBOW(std::string path, BOW_l bow, bool visualization, int delay, bool saveOutput)
 {
 
 	::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
@@ -183,11 +181,14 @@ bool testBOW(std::string path, BOW_l bow, bool visualization, int delay)
 		else ::std::cout << "Error in prediction" << ::std::endl;
 	}
 
-    // Save all contact values in an XML file
-    ::std::string fname = path + "contact_values.xml";
-    cv::FileStorage fs(fname, cv::FileStorage::WRITE);
-    fs << "contact" << reponses;
-    fs.release();
+    if (saveOutput)
+    {
+        // Save all contact values in an XML file
+        ::std::string fname = path + "contact_values.xml";
+        cv::FileStorage fs(fname, cv::FileStorage::WRITE);
+        fs << "contact" << reponses;
+        fs.release();
+    }
 
 	std::cout << "Number of images: " << imList.size() << ::std::endl;
 	std::cout << "Percent of contact: " << response_contact*1.0/imList.size() << ::std::endl;
@@ -206,6 +207,93 @@ bool testBOW(std::string path, BOW_l bow, bool visualization, int delay)
 	return true;
 }
 
+
+/*
+ * Overloaded function using the new BagOfFeatures class
+ * */
+bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay, bool saveOutput)
+{
+
+    ::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
+    ::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
+
+    ::std::vector< ::std::string> imList;
+    int count = getImList(imList,path);
+    std::sort(imList.begin(), imList.end(), numeric_string_compare);
+
+    ::std::vector< ::std::string> classes = bow.getClasses();
+
+    ::std::vector<float> reponses;
+
+    int response_contact = 0, response_free = 0;
+
+    std::vector<float> timings;
+
+    for(int i=0; i<imList.size();i++)
+    {
+        float response = 0.0;
+        std::string filepath = path + "/" + imList[i];
+
+        const ::cv::Mat img = ::cv::imread(filepath);
+
+        t1 = ::std::chrono::steady_clock::now();
+
+        if (bow.predict(&img,response))
+        {
+
+            t2 = ::std::chrono::steady_clock::now();
+            std::chrono::microseconds ms = std::chrono::duration_cast<std::chrono::microseconds> (t2-t1);
+            timings.push_back(ms.count());
+
+            if (classes[(int) response] == "Free")
+            {
+                response = 0.0;
+                response_free++;
+            }
+            else
+            {
+                response = 1.0;
+                response_contact++;
+            }
+
+            if(visualization)
+            {
+
+                ::cv::putText(img,cv::String(::std::to_string(response).c_str()),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
+                ::cv::imshow("Image", img);
+                char key = ::cv::waitKey(delay);
+
+                if (key == 27) break;
+            }
+        }
+        else ::std::cout << "Error in prediction" << ::std::endl;
+    }
+
+    if (saveOutput)
+    {
+        // Save all contact values in an XML file
+        ::std::string fname = path + "contact_values.xml";
+        cv::FileStorage fs(fname, cv::FileStorage::WRITE);
+        fs << "contact" << reponses;
+        fs.release();
+    }
+
+    std::cout << "Number of images: " << imList.size() << ::std::endl;
+    std::cout << "Percent of contact: " << response_contact*1.0/imList.size() << ::std::endl;
+    std::cout << "Percent of Free: " << response_free*1.0/imList.size() << ::std::endl;
+
+    double sum = std::accumulate(timings.begin(), timings.end(), 0.0);
+    double mean = sum/1000.0 / timings.size();
+
+    auto result = std::minmax_element(timings.begin(), timings.end());
+
+    std::cout << "Average prediction time (ms): " << mean << ::std::endl;
+
+    std::cout << "min is " << *result.first / 1000.0  << ::std::endl;
+    std::cout << "max is " << *result.second / 1000.0 << ::std::endl;
+
+    return true;
+}
 
 
 /*
@@ -259,13 +347,13 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize, i
     ::std::string test_path_surgery =  base_folder_surgeries + "/2017-01-26_12-42-26/";
 
 
-    // @TODO: use the classifier library
-    BOW_l bow("FAST-LUCID", 50);
+    BagOfFeatures bow;
 
-    if ((trainSVM) && (!  (bow.trainBOW(train_path)) ))
+    /*if ((trainSVM) && (!  (bow.trainBOW(train_path)) ))
         return false;
+    */
 
-    else if (! (bow.LoadFromFile(output_path)) )
+    if (! (bow.load(output_path)) )
         return false;
 
     switch (testType)

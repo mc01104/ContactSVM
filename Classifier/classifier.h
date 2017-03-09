@@ -84,14 +84,19 @@ class BagOfFeatures : public ImageClassifier
 
 		virtual bool save(const ::std::string& path_to_classifier_files);
 
-		virtual bool train(const ::std::vector<::cv::Mat*> imgs, ::std::vector<float>& labels) = 0;
+        virtual bool train(const ::std::vector< ::cv::Mat*> imgs, ::std::vector<float>& labels) ; // removed = 0 here since this function is implemented
 
-		virtual bool predict(const ::cv::Mat* const img, float& response) const = 0;
+        virtual bool predict(const ::cv::Mat* const img, float& response) const ; // removed = 0 here since this function is implemented
+
+    // accessor functions
+    public:
+        ::std::vector<::std::string> getClasses();
+
 
 	// implementation
 	protected:
 
-		void initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure = ::cv::ml::KNearest::KDTREE);
+        void initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure = ::cv::ml::KNearest::BRUTE_FORCE); // KDTREE is not working. Plus, time difference is very minimal, less than 1 ms ...
 
 		void featureExtraction(const ::std::vector<::cv::Mat*>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors);
 
