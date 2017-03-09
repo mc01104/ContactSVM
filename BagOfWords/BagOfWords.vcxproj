@@ -79,12 +79,12 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\..\..\include;C:\opencv\build\install\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\..\..\include;C:\opencv\build\install\include;$(SolutionDir)\Utilities;$(SolutionDir)\Classifier;$(SolutionDir)\Lib;$(SolutionDir)\LieGroup</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>../$(Platform)/$(Configuration); $(OPENCV_DIR)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world310d.lib;opencv_xfeatures2d310d.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>classifier.lib;Utilities.lib;opencv_world310d.lib;opencv_xfeatures2d310d.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -106,29 +106,28 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\..\..\include;C:\opencv\build\install\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\..\..\include;C:\opencv\build\install\include;$(SolutionDir)\Utilities;$(SolutionDir)\Classifier;$(SolutionDir)\Lib;$(SolutionDir)\LieGroup</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>../$(Platform)/$(Configuration); $(OPENCV_DIR)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world310.lib;opencv_xfeatures2d310.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>classifier.lib;Utilities.lib;opencv_world310d.lib;opencv_xfeatures2d310d.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BOW.cpp" />
     <ClCompile Include="BOW_lowlevel.cpp" />
-    <ClCompile Include="FileUtils.cpp" />
-    <ClCompile Include="helpers_sort.cpp" />
+    <ClCompile Include="helpers_sort.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Network_force.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BOW.h" />
     <ClInclude Include="BOW_lowlevel.h" />
     <ClInclude Include="dirent.h" />
-    <ClInclude Include="FileUtils.h" />
     <ClInclude Include="helpers_sort.h" />
     <ClInclude Include="helper_parseopts.h" />
     <ClInclude Include="Main.h" />

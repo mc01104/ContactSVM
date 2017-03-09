@@ -11,7 +11,10 @@
 #include <numeric>
 
 #include <limits.h>
-#include <unistd.h>
+
+#ifdef LINUX
+	#include <unistd.h>
+#endif
 
 #include "Main.h"
 #include "BOW_lowlevel.h"
