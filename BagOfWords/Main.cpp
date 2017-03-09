@@ -200,7 +200,9 @@ int main( int argc, char** argv )
 
     // path of surgery images
     ::std::string test_path_surgery =  base_folder_surgeries + "/2017-01-26_12-42-26/"; // + "/2016-07-28_12-24-43/"; // "\\2016-07-28_12-24-43\\"
-	if(cmdOptionExists(argv, argv+argc, "-i"))
+
+
+    if(cmdOptionExists(argv, argv+argc, "-i"))
     {
 		char * inputfile = getCmdOption(argv, argv + argc, "-i");
 		test_path_surgery  = ::std::string(inputfile);
@@ -251,22 +253,23 @@ int main( int argc, char** argv )
 //        //::cv::waitKey(0);
 
 //        testBOW(validate_path_contact,bow, false);
-//        ::cv::waitKey(0);
+//        //::cv::waitKey(0);
 //        testBOW(validate_path_free,bow, false);
-//        ::cv::waitKey(0);
+//        //::cv::waitKey(0);
 
 //        //testBOW(test_path_contact,bow, true);
 //    }
 
+    BOW_l bow2("FAST-LUCID", 50);
 
-    if (bow.LoadFromFile(output_path))
+    if (bow2.LoadFromFile(output_path))
     {
-//        testBOW(test_path_contact,bow, false);
-//        ::cv::waitKey(0);
-//        testBOW(test_path_free,bow, false);
-//        ::cv::waitKey(0);
+//        testBOW(validate_path_contact,bow2, false);
+//        //::cv::waitKey(0);
+//        testBOW(validate_path_free,bow2, false);
+//        //::cv::waitKey(0);
 
-        testBOW(test_path_surgery,bow, true, 1);
+        testBOW(test_path_surgery,bow2, true, 1);
     }
 
 
