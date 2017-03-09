@@ -4,9 +4,10 @@
 // general includes
 #include <vector>
 #include <string>
+#include <exception>
 
 // opencv
-#include <opencv2\opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 /**
   *	@brief: interface class for image classification

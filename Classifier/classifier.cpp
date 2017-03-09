@@ -1,8 +1,8 @@
 #include "classifier.h"
 
-#include <opencv2\xfeatures2d\nonfree.hpp>
-#include <opencv2\xfeatures2d.hpp>
-#include <opencv2\features2d.hpp>
+#include <opencv2/xfeatures2d/nonfree.hpp>
+#include <opencv2/xfeatures2d.hpp>
+#include <opencv2/features2d.hpp>
 #include <opencv2/ml.hpp>
 
 #include "Utilities.h"
@@ -20,7 +20,8 @@ bool
 ImageClassifier::predict(const ::std::vector<::cv::Mat*>& imgs, ::std::vector<float>& labels) const
 {
 	if (imgs.size() < 1)
-		throw(::std::exception("Vector of images is empty!!"));
+        // std::exception(char*) is a MS-specific function, not in the C++ standards
+        throw(::std::runtime_error("Vector of images is empty!!"));
 
 	float tmpResponse = 0.0;
 	labels.resize(0);

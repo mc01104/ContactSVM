@@ -1,6 +1,6 @@
-#include <opencv2\opencv.hpp>
-#include <opencv2\xfeatures2d\nonfree.hpp>
-#include <opencv2\features2d.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/xfeatures2d/nonfree.hpp>
+#include <opencv2/features2d.hpp>
 #include <opencv2/ml.hpp>
 
 #include <iostream> 
@@ -10,18 +10,22 @@
 #include <chrono>
 #include <numeric>
 
+#include <limits.h>
+#include <unistd.h>
+
 #include "Main.h"
 #include "BOW_lowlevel.h"
 #include "FileUtils.h"
 #include "Network_force.h"
 #include "helper_parseopts.h"
+#include "CSV_reader.h"
 
 void processVideo();
 void classifierTest();
 /*bool testBOW(std::string path, BOW_l bow)
 {
 
-	::std::vector<::std::string> imList;
+    ::std::vector< ::std::string> imList;
 
 	int count = getImList(imList,path);
 
@@ -37,6 +41,9 @@ void classifierTest();
 
 void processVideo()
 {
+
+    /**** CAREFUL WITH COMPRESSED MP4 VIDEOS !!! *****/
+
 	// Load video
 	::std::string filename = "C:\\Users\\RC\\Dropbox\\PVL_robot\\Classifier_test_experiment\\2017-01-26_12-46-26_CR04.mp4";
 	::cv::VideoCapture v(filename);
@@ -52,7 +59,7 @@ void processVideo()
 	//BOW_l bow;
 	
 	bow.LoadFromFile(output_path);
-	::std::vector<::std::string> classes = bow.getClasses();
+    ::std::vector< ::std::string> classes = bow.getClasses();
 
 	//::std::ofstream contactStream("C:\\Users\\RC\\Dropbox\\Videos\\processed_videos\\ctr_nav_cr_06\\contact_data.txt");
 
@@ -130,20 +137,20 @@ void classifierTest()
 	}
 }
 
-bool testBOW(std::string path, BOW_l bow, bool visualization)
+bool testBOW(std::string path, BOW_l bow, bool visualization, int delay)
 {
 
 	::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
 	::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
 
-	::std::vector<::std::string> imList;
+    ::std::vector< ::std::string> imList;
 	int count = getImList(imList,path);
 	std::sort(imList.begin(), imList.end(), numeric_string_compare);
 
 	std::deque<float> values(5,0);
 	float average_val = 0.0;
 
-	::std::vector<::std::string> classes = bow.getClasses();
+    ::std::vector< ::std::string> classes = bow.getClasses();
 
 	::std::vector<float> reponses;
 
@@ -154,7 +161,7 @@ bool testBOW(std::string path, BOW_l bow, bool visualization)
 	for(int i=0; i<imList.size();i++)
 	{
 		float response = 0.0;
-		std::string filepath = path + "\\" + imList[i];
+        std::string filepath = path + "/" + imList[i];
 
 		::cv::Mat img = ::cv::imread(filepath);
 
@@ -191,13 +198,21 @@ bool testBOW(std::string path, BOW_l bow, bool visualization)
 				
 				::cv::putText(img,cv::String(::std::to_string(response).c_str()),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
 				::cv::imshow("Image", img);
-				char key = ::cv::waitKey(1);
+                char key = ::cv::waitKey(delay);
 
 				if (key == 27) break;
 			}
 		}
 		else ::std::cout << "Error in prediction" << ::std::endl;
 	}
+
+
+    // Save all contact values in an XML file
+    ::std::string fname = path + "contact_values.xml";
+    cv::FileStorage fs(fname, cv::FileStorage::WRITE);
+    fs << "contact" << reponses;
+    fs.release();
+
 
 	std::cout << "Number of images: " << imList.size() << ::std::endl;
 	std::cout << "Percent of contact: " << response_contact*1.0/imList.size() << ::std::endl;
@@ -218,30 +233,100 @@ bool testBOW(std::string path, BOW_l bow, bool visualization)
 
 
 
-void testBOWFeature(std::string feature, std::string train_path, std::string test_path_contact, std::string test_path_free)
+/*
+ * Process images from csvFile
+ * The CSV file should contain two fields:
+ *      - base_folder: folder where the classifier files and the dataset is (in test/train/validate folders)
+ *      - folder_surgeries: base folder with images from surgeries
+ *
+ * Arguments:
+ *      ::std::string csvFilePath the path to the CSV file
+ *      bool trainSVM - train the SVM if true, load from file otherwise. Defaults to true
+ *      bool visualize - visualize the classifier output in a window or not. Defaults to false
+ *      int testType - 0 for surgery images, 1 for validate dataset, 2 for test dataset. Defaults to 0
+ * */
+bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize, int testType)
 {
-	BOW_l* bow = new BOW_l(feature);
+    ParseOptions op = ParseOptions(csvFilePath);
 
-	if (bow->trainBOW(train_path)) 
-	{
-		std::cout << "\n\n==============" << std::endl;
-		std::cout << feature << " BOW trained and saved" << std::endl;
+    std::string base_folder;
+    std::string base_folder_surgeries;
 
-		::std::cout << "Test with Contact" << ::std::endl;
-		testBOW(test_path_contact,*bow, true);
+    std::vector<std::string> folder;
+    if (op.getData(std::string("base_folder"),folder))
+    {
+        base_folder = folder[0];
+        std::cout << base_folder << std::endl;
+    }
 
-		::std::cout << "Test with Free file" << ::std::endl;
-		testBOW(test_path_free,*bow, true);
+    if (op.getData(std::string("folder_surgeries"),folder))
+    {
+        base_folder_surgeries = folder[0];
+        std::cout << base_folder_surgeries << std::endl;
+    }
 
-	}
-	delete bow;
+    else
+    {
+        std::cout << "Problem parsing base folder path from CSV file" << std::endl;
+        return 0;
+    }
+
+    std::string output_path = base_folder + "output_";
+    std::string train_path = base_folder + "/train/";
+    std::string validate_path_contact = base_folder + "/validate/Contact/";
+    std::string validate_path_free =  base_folder + "/validate/Free/";
+    std::string test_path_contact = base_folder + "/test/Contact/";
+    std::string test_path_free =  base_folder + "/test/Free/";
+
+
+    // path of surgery images
+    // @TODO: code the path to images directly in the CSV file
+    ::std::string test_path_surgery =  base_folder_surgeries + "/2017-01-26_12-42-26/";
+
+
+    // @TODO: use the classifier library
+    BOW_l bow("FAST-LUCID", 50);
+
+    if ((trainSVM) && (!  (bow.trainBOW(train_path)) ))
+        return false;
+
+    else if (! (bow.LoadFromFile(output_path)) )
+        return false;
+
+    switch (testType)
+    {
+        case 1:
+            testBOW(validate_path_contact,bow, visualize);
+            cv::waitKey(0);
+            testBOW(validate_path_free,bow, visualize);
+            cv::waitKey(0);
+        case 2:
+            testBOW(test_path_contact,bow, visualize);
+            cv::waitKey(0);
+            testBOW(test_path_free,bow, visualize);
+            cv::waitKey(0);
+        default:
+            testBOW(test_path_surgery,bow, visualize);
+            cv::waitKey(0);
+    }
+
+    return true;
 }
+
+
+
+
+
+
 
 
 int main( int argc, char** argv )
 {
 
 	processVideo();
+
+
+
 	//classifierTest();
 	//std::string base_folder = "M:\\Public\\Data\\Cardioscopy_project\\ContactDetection_data\\Surgery_dev\\";
 
@@ -292,16 +377,6 @@ int main( int argc, char** argv )
 	//	std::cout << "Command line options are: \n -i for input path of image files \n -s for basepath of saved SVM files \n -ip to set the IP address of the server \n -g to set the force gain" << ::std::endl;
 	//	return 0;
  //   }
-
-
-	///*testBOWFeature("SURF", train_path, test_path_contact, test_path_free);
-	//testBOWFeature("FAST-SURF", train_path, test_path_contact, test_path_free);
-	//testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
-	//*/
-
-	////testBOWFeature("FAST-LUCID", train_path, test_path_contact, test_path_free);
-
-	////system("pause");
 
 	//BOW_l bow("FAST-LUCID");
 
