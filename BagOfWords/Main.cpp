@@ -23,7 +23,8 @@
 #include "helper_parseopts.h"
 #include "CSV_reader.h"
 
-
+void createDataset(const ::std::string& path, ::std::vector<::cv::Mat>& images, ::std::vector<int>& labels);
+void classifierTestGeorge();
 
 void processVideo()
 {
@@ -296,7 +297,8 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
     ::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
 
     ::std::vector< ::std::string> imList;
-    int count = getImList(imList,path);
+	path = "F:\\tmp\\2017-01-26_12-46-26";
+    int count = getImList(imList, path);
     std::sort(imList.begin(), imList.end(), numeric_string_compare);
 
     ::std::vector< ::std::string> classes = bow.getClasses();
@@ -310,13 +312,13 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
     for(int i=0; i<imList.size();i++)
     {
         float response = 0.0;
-        std::string filepath = path + "/" + imList[i];
+        std::string filepath = path + "\\" + imList[i];
 
         const ::cv::Mat img = ::cv::imread(filepath);
 
         t1 = ::std::chrono::steady_clock::now();
 
-        if (bow.predict(&img,response))
+        if (bow.predict(img,response))
         {
 
             t2 = ::std::chrono::steady_clock::now();
@@ -392,106 +394,163 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
  *
  * \return true if no error occured
  * */
-bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize, int testType)
+//bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize, int testType)
+//{
+//    ParseOptions op = ParseOptions(csvFilePath);
+//
+//    std::string base_folder;
+//    std::string base_folder_surgeries;
+//
+//    std::vector<std::string> folder;
+//    if (op.getData(std::string("base_folder"),folder))
+//    {
+//        base_folder = folder[0];
+//        std::cout << base_folder << std::endl;
+//    }
+//
+//    if (op.getData(std::string("folder_surgeries"),folder))
+//    {
+//        base_folder_surgeries = folder[0];
+//        std::cout << base_folder_surgeries << std::endl;
+//    }
+//
+//    else
+//    {
+//        std::cout << "Problem parsing base folder path from CSV file" << std::endl;
+//        return 0;
+//    }
+//
+//    std::string output_path = base_folder + "/output_";
+//    std::string train_path = base_folder + "/train/";
+//    std::string validate_path_contact = base_folder + "/validate/Contact/";
+//    std::string validate_path_free =  base_folder + "/validate/Free/";
+//    std::string test_path_contact = base_folder + "/test/Contact/";
+//    std::string test_path_free =  base_folder + "/test/Free/";
+//
+//
+//    // path of surgery images
+//    // @TODO: code the path to images directly in the CSV file
+//    //::std::string test_path_surgery =  base_folder_surgeries + "/2017-01-26_12-42-26/";
+//	::std::string test_path_surgery =  base_folder_surgeries + "\\2017-01-26_12-42-26";
+//
+//
+//    BagOfFeatures bow;
+//
+//
+//    // TODO: implement function reading the directory to extract the list of images and their labels
+//    // Equivalent in Bow_lowlevel is the trainBow function
+//
+//    if (trainSVM)
+//    {
+//        ::std::vector< cv::Mat*> imgs;
+//        ::std::vector<float> labels;
+//        std::vector<std::string> classes;
+//        std::vector<std::string> classList;
+//
+//        // list class names
+//        int class_id = 0;
+//        if (getClassesNames(classes, train_path))
+//        {
+//
+//            for (std::string className : classes)
+//            {
+//                int count = getImagesFromPath(imgs,train_path + className);
+//                for (int i=0;i<count;i++)
+//                {
+//                    classList.push_back(className);
+//                    labels.push_back(class_id);
+//                }
+//                class_id++;
+//            }
+//        }
+//
+//        if (!(bow.train(imgs,labels)) )
+//            return false;
+//    }
+//
+//
+//    if (! (bow.load(output_path)) )
+//        return false;
+//
+//    switch (testType)
+//    {
+//        case 1:
+//            testBOW(validate_path_contact,bow, visualize);
+//            cv::waitKey(0);
+//            testBOW(validate_path_free,bow, visualize);
+//            cv::waitKey(0);
+//        case 2:
+//            testBOW(test_path_contact,bow, visualize);
+//            cv::waitKey(0);
+//            testBOW(test_path_free,bow, visualize);
+//            cv::waitKey(0);
+//        default:
+//            testBOW(test_path_surgery,bow, visualize);
+//            cv::waitKey(0);
+//    }
+//
+//    return true;
+//}
+//
+
+void createDataset(const ::std::string& path, ::std::vector<::cv::Mat>& images, ::std::vector<int>& labels)
 {
-    ParseOptions op = ParseOptions(csvFilePath);
 
-    std::string base_folder;
-    std::string base_folder_surgeries;
+	// load the training images
+	::std::string tempPath = path + "Contact\\";
+	::std::vector<::std::string> im_paths_train_contact;
 
-    std::vector<std::string> folder;
-    if (op.getData(std::string("base_folder"),folder))
-    {
-        base_folder = folder[0];
-        std::cout << base_folder << std::endl;
-    }
+	// load contact and create labels
+	int count_train_contact = getImList(im_paths_train_contact, tempPath);
+	for (int i = 0; i < count_train_contact; ++i)
+		im_paths_train_contact[i] = tempPath + im_paths_train_contact[i];
 
-    if (op.getData(std::string("folder_surgeries"),folder))
-    {
-        base_folder_surgeries = folder[0];
-        std::cout << base_folder_surgeries << std::endl;
-    }
+	::std::vector<int> labels_contact(count_train_contact);
+	for (int i = 0; i < count_train_contact; ++i)
+		labels_contact[i] = 1;
 
-    else
-    {
-        std::cout << "Problem parsing base folder path from CSV file" << std::endl;
-        return 0;
-    }
+	// load free and create labels
+	tempPath = path + "Free\\";
+	::std::vector<::std::string> im_paths_train_free;
+	int count_train_free = getImList(im_paths_train_free, tempPath);
+	for (int i = 0; i < count_train_free; ++i)
+		im_paths_train_free[i] = tempPath + im_paths_train_free[i];
 
-    std::string output_path = base_folder + "output_";
-    std::string train_path = base_folder + "/train/";
-    std::string validate_path_contact = base_folder + "/validate/Contact/";
-    std::string validate_path_free =  base_folder + "/validate/Free/";
-    std::string test_path_contact = base_folder + "/test/Contact/";
-    std::string test_path_free =  base_folder + "/test/Free/";
+	::std::vector<int> labels_free(count_train_free);
+	for (int i = 0; i < count_train_free; ++i)
+		labels_free[i] = 0;
 
 
-    // path of surgery images
-    // @TODO: code the path to images directly in the CSV file
-    ::std::string test_path_surgery =  base_folder_surgeries + "/2017-01-26_12-42-26/";
+	// build the training data
+	::std::vector<::std::string> imgPaths(count_train_contact);
+	::std::copy(im_paths_train_contact.begin(), im_paths_train_contact.end(), imgPaths.begin());
+	imgPaths.insert(imgPaths.end(), im_paths_train_free.begin(), im_paths_train_free.end());
 
+	labels.resize(count_train_contact);
+	::std::copy(labels_contact.begin(), labels_contact.end(), labels.begin());
+	labels.insert(labels.end(), labels_free.begin(), labels_free.end());
 
-    BagOfFeatures bow;
+	if (imgPaths.size() != labels.size())
+		throw("Error creating the training dataset -> images and labels are not equal in number");
 
+	for (int i = 0; i < imgPaths.size(); ++i)
+		images.push_back(::cv::imread(imgPaths[i]));
 
-    // TODO: implement function reading the directory to extract the list of images and their labels
-    // Equivalent in Bow_lowlevel is the trainBow function
-
-    if (trainSVM)
-    {
-        ::std::vector< cv::Mat*> imgs;
-        ::std::vector<float> labels;
-        std::vector<std::string> classes;
-        std::vector<std::string> classList;
-
-        // list class names
-        int class_id = 0;
-        if (getClassesNames(classes, train_path))
-        {
-
-            for (std::string className : classes)
-            {
-                int count = getImagesFromPath(imgs,train_path + className);
-                for (int i=0;i<count;i++)
-                {
-                    classList.push_back(className);
-                    labels.push_back(class_id);
-                }
-                class_id++;
-            }
-        }
-
-        if (!(bow.train(imgs,labels)) )
-            return false;
-    }
-
-
-    if (! (bow.load(output_path)) )
-        return false;
-
-    switch (testType)
-    {
-        case 1:
-            testBOW(validate_path_contact,bow, visualize);
-            cv::waitKey(0);
-            testBOW(validate_path_free,bow, visualize);
-            cv::waitKey(0);
-        case 2:
-            testBOW(test_path_contact,bow, visualize);
-            cv::waitKey(0);
-            testBOW(test_path_free,bow, visualize);
-            cv::waitKey(0);
-        default:
-            testBOW(test_path_surgery,bow, visualize);
-            cv::waitKey(0);
-    }
-
-    return true;
 }
 
+void classifierTestGeorge()
+{
+	// need to give as input the number of words
+	::std::vector<::cv::Mat> training_imgs;
+	::std::vector<int> training_labels;
+	::std::string train_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\train\\";
+	createDataset(train_path, training_imgs, training_labels);
+	
+	BagOfFeatures bow;
+	bow.train(training_imgs, training_labels);
+	bow.save("./");
 
-
-
+}
 
 
 
@@ -499,11 +558,8 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize, i
 int main( int argc, char** argv )
 {
 
-    //processVideo();
-
-    ::std::string csvFilePath = "./folders_contactdetection.csv";
-
-    processFromFile(csvFilePath,true,true,0);
+	classifierTestGeorge();
+    //processFromFile(csvFilePath,true,true,0);
     //classifierTest_Benoit(csvFilePath);
 
 	return 0;
