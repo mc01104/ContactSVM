@@ -503,8 +503,8 @@ int main( int argc, char** argv )
 
     ::std::string csvFilePath = "./folders_contactdetection.csv";
 
-    //processFromFile(csvFilePath,true,true,0);
-    classifierTest_Benoit(csvFilePath);
+    processFromFile(csvFilePath,true,true,0);
+    //classifierTest_Benoit(csvFilePath);
 
 	return 0;
 }
