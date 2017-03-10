@@ -95,7 +95,8 @@ void processVideo()
 
 void classifierTest()
 {
-	BOW_l bow("FAST-LUCID"); //I made a constructor which takes the vocabulary size as a parameter in the linux_compilation branch, but it defaults anyway to 50 in the main branch. You should use BOW_l bow("FAST-LUCID"); in your version of the code, or checkout the linux_compilation branch, but there are hardcoded paths and stuff like this that I did not cleanup
+    BOW_l bow("FAST-LUCID"); //I made a constructor which takes the vocabulary size as a parameter in the linux_compilation branch, but it defaults anyway to 50 in the main branch. You should use BOW_l bow("FAST-LUCID"); in your version of the code, or checkout the linux_compilation branch, but there are hardcoded paths and stuff like this that I did not cleanup
+
 
 	::std::string train_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\train\\";
 	//::std::string output_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\results\\";
@@ -121,6 +122,70 @@ void classifierTest()
 		testBOW(validate_path_free,bow2, false);
 
 	}
+}
+
+
+bool classifierTest_Benoit(::std::string csvFilePath)
+{
+    BOW_l bow("FAST-LUCID_NEW", 60);
+
+    ParseOptions op = ParseOptions(csvFilePath);
+
+    std::string base_folder;
+    std::string base_folder_surgeries;
+
+    std::vector<std::string> folder;
+    if (op.getData(std::string("base_folder"),folder))
+    {
+        base_folder = folder[0];
+        std::cout << base_folder << std::endl;
+    }
+
+    if (op.getData(std::string("folder_surgeries"),folder))
+    {
+        base_folder_surgeries = folder[0];
+        std::cout << base_folder_surgeries << std::endl;
+    }
+
+    else
+    {
+        std::cout << "Problem parsing base folder path from CSV file" << std::endl;
+        return 0;
+    }
+
+    std::string output_path = base_folder + "output_";
+    std::string train_path = base_folder + "/train/";
+    std::string validate_path_contact = base_folder + "/validate/Contact/";
+    std::string validate_path_free =  base_folder + "/validate/Free/";
+    std::string test_path_contact = base_folder + "/test/Contact/";
+    std::string test_path_free =  base_folder + "/test/Free/";
+
+
+    // path of surgery images
+    // @TODO: code the path to images directly in the CSV file
+    ::std::string test_path_surgery =  base_folder_surgeries + "/2017-01-26_12-42-26/";
+
+
+//    if (bow.trainBOW(train_path))
+//    {
+//        bow.SaveToFile(output_path);
+
+//        testBOW(test_path_contact,bow, false);
+
+//        testBOW(test_path_free,bow, false);
+//    }
+
+    if (bow.LoadFromFile(output_path))
+    {
+        testBOW(test_path_contact,bow, false);
+
+        testBOW(test_path_free,bow, false);
+
+    }
+
+    return 1;
+
+
 }
 
 bool testBOW(std::string path, BOW_l bow, bool visualization, int delay, bool saveOutput)
@@ -372,13 +437,33 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize, i
     // TODO: implement function reading the directory to extract the list of images and their labels
     // Equivalent in Bow_lowlevel is the trainBow function
 
-    /*if ((trainSVM)
+    if (trainSVM)
     {
         ::std::vector< cv::Mat*> imgs;
-        getImagesFromPath(imgs,train_path);
-        if (!(bow.train(train_path)) )
+        ::std::vector<float> labels;
+        std::vector<std::string> classes;
+        std::vector<std::string> classList;
+
+        // list class names
+        int class_id = 0;
+        if (getClassesNames(classes, train_path))
+        {
+
+            for (std::string className : classes)
+            {
+                int count = getImagesFromPath(imgs,train_path + className);
+                for (int i=0;i<count;i++)
+                {
+                    classList.push_back(className);
+                    labels.push_back(class_id);
+                }
+                class_id++;
+            }
+        }
+
+        if (!(bow.train(imgs,labels)) )
             return false;
-    }*/
+    }
 
 
     if (! (bow.load(output_path)) )
@@ -418,7 +503,8 @@ int main( int argc, char** argv )
 
     ::std::string csvFilePath = "./folders_contactdetection.csv";
 
-    processFromFile(csvFilePath,true,true,0);
+    //processFromFile(csvFilePath,true,true,0);
+    classifierTest_Benoit(csvFilePath);
 
 	return 0;
 }
