@@ -541,15 +541,40 @@ void createDataset(const ::std::string& path, ::std::vector<::cv::Mat>& images, 
 void classifierTestGeorge()
 {
 	// need to give as input the number of words
-	::std::vector<::cv::Mat> training_imgs;
-	::std::vector<int> training_labels;
-	::std::string train_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\train\\";
-	createDataset(train_path, training_imgs, training_labels);
-	
-	BagOfFeatures bow;
-	bow.train(training_imgs, training_labels);
-	bow.save("./");
+	//::std::vector<::cv::Mat> training_imgs;
+	//::std::vector<int> training_labels;
+	//::std::string train_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\train\\";
+	//createDataset(train_path, training_imgs, training_labels);
+	//
+	//BagOfFeatures bow;
+	//bow.train(training_imgs, training_labels);
+	//bow.save("./");
 
+	BagOfFeatures bow_from_file;
+	bow_from_file.load("./");
+
+	::std::vector<::cv::Mat> validation_imgs;
+	::std::vector<int> validation_labels;
+	::std::string validate_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\validate\\";
+	createDataset(validate_path, validation_imgs, validation_labels);
+
+	::cv::namedWindow("my_window",CV_WINDOW_AUTOSIZE);
+	float response = 0;
+	for (int i = 0; i < validation_imgs.size(); ++i)
+	{
+		if (!bow_from_file.predict(validation_imgs[i], response))
+			::std::cout << "Classifier failed on image " << i << ::std::endl;
+
+		::cv::Point center(20,50);
+		::cv::Scalar color(0,255,255);
+
+		if (response == 1)
+			::cv::circle(validation_imgs[i], center, 10, color, -1);
+
+		::cv::imshow("my_window", validation_imgs[i]);
+		::cv::waitKey();
+
+	}
 }
 
 

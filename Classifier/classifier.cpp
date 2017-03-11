@@ -17,7 +17,7 @@ ImageClassifier::~ImageClassifier()
 }
 
 bool 
-ImageClassifier::predict(const ::std::vector<::cv::Mat*>& imgs, ::std::vector<float>& labels) const
+ImageClassifier::predict(const ::std::vector<::cv::Mat>& imgs, ::std::vector<float>& labels) const
 {
 	if (imgs.size() < 1)
         // std::exception(char*) is a MS-specific function, not in the C++ standards
@@ -26,7 +26,7 @@ ImageClassifier::predict(const ::std::vector<::cv::Mat*>& imgs, ::std::vector<fl
 	float tmpResponse = 0.0;
 	labels.resize(0);
 
-	for (::std::vector<::cv::Mat*>::const_iterator it = imgs.begin(); it != imgs.end(); ++it)
+	for (::std::vector<::cv::Mat>::const_iterator it = imgs.begin(); it != imgs.end(); ++it)
 	{
 		if(!this->predict(*it, tmpResponse))
 			return false;
@@ -89,8 +89,14 @@ bool BagOfFeatures::load(const ::std::string& path_to_classifier_files)
 			m_trained = true;	 // not sure if I need that
 		}
 		else
-			this->initializeKNN();
+		{
+			m_dictionarySize = 50;
+			//::cv::kmeans(training_descriptors, m_dictionarySize, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
+		}
 
+		// initialize k-nearest neighbors
+		this->initializeKNN();
+		
 		// Load SVM parameters
 		m_svm = ::cv::ml::StatModel::load<::cv::ml::SVM>(path_to_classifier_files + "SVM.xml");
 
@@ -184,7 +190,7 @@ bool BagOfFeatures::save(const ::std::string& path_to_classifier_files)
  *
  * \return true if the BOF classifier was correctly trained
  * */
-bool BagOfFeatures::train(::std::vector<::cv::Mat*> imgs, ::std::vector<float>& labels)
+bool BagOfFeatures::train(const ::std::vector<::cv::Mat>& imgs, const ::std::vector<int>& labels)
 {
 	
 	// feature extraction
@@ -194,6 +200,7 @@ bool BagOfFeatures::train(::std::vector<::cv::Mat*> imgs, ::std::vector<float>& 
 
 	// kmeans cluster to construct the vocabulary
 	::cv::Mat cluster_labels;
+	m_dictionarySize = 50;
 	::cv::kmeans(training_descriptors, m_dictionarySize, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
 	this->initializeKNN();
 
@@ -205,7 +212,10 @@ bool BagOfFeatures::train(::std::vector<::cv::Mat*> imgs, ::std::vector<float>& 
 	m_svm = ::cv::ml::SVM::create();
 	m_svm->setGamma(0.02);
 
-	m_trained = (m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE,labels) ? true : false); 
+	/*::cv::Mat labelsCV(labels, CV_32FC1);*/
+	//::std::vector<int> labelsInt(labels.size());
+	//::std::copy(labels.begin(), labels.end(), labelsInt.begin());
+	m_trained = (m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE, labels) ? true : false); 
 
 	return m_trained;
 
@@ -222,7 +232,7 @@ bool BagOfFeatures::train(::std::vector<::cv::Mat*> imgs, ::std::vector<float>& 
  *
  * \return true if the BOF classifier was correctly trained
  * */
-bool BagOfFeatures::predict(const ::cv::Mat* const img, float& response) const
+bool BagOfFeatures::predict(const ::cv::Mat img, float& response) const
 {
 	if (!m_trained) 
 		return false;
@@ -234,8 +244,8 @@ bool BagOfFeatures::predict(const ::cv::Mat* const img, float& response) const
 	for (int i = 0; i < m_vocabulary.rows; ++i) 
 		v_word_labels.push_back(i);
 
-	m_featureDetector->detect(*img, keyPoints);
-	m_descriptorExtractor->compute(*img, keyPoints,descriptors);
+	m_featureDetector->detect(img, keyPoints);
+	m_descriptorExtractor->compute(img, keyPoints,descriptors);
 	
 	// put descriptors in right format for kmeans clustering
 	if(descriptors.type()!=CV_32F) 
@@ -328,7 +338,7 @@ void BagOfFeatures::initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructu
  * \param[in,out] image_number - a vector making the correspondence between the descriptors and the input image they belong to
  * \param[in,out] training_descriptors - a cv::Mat with all descriptors from all images stacked vertically
  * */
-void BagOfFeatures::featureExtraction(const ::std::vector<::cv::Mat*>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors)
+void BagOfFeatures::featureExtraction(const ::std::vector<::cv::Mat>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors)
 {
 	if (training_descriptors.size > 0)
 		training_descriptors.resize(0);
@@ -339,10 +349,10 @@ void BagOfFeatures::featureExtraction(const ::std::vector<::cv::Mat*>& imgs, ::s
 	for(int i = 0; i < imgs.size(); ++i)
 	{
 		// detect keypoints
-		m_featureDetector->detect(*imgs[i], keyPoints);
+		m_featureDetector->detect(imgs[i], keyPoints);
 
 		// extract descriptors
-		m_descriptorExtractor->compute(*imgs[i], keyPoints, descriptors);
+		m_descriptorExtractor->compute(imgs[i], keyPoints, descriptors);
 		training_descriptors.push_back(descriptors);
 
 		for (int j = 0; j< descriptors.rows; j++)
@@ -366,7 +376,7 @@ void BagOfFeatures::featureExtraction(const ::std::vector<::cv::Mat*>& imgs, ::s
  * \param[in] image_number - a vector making the correspondence between the cluster_labels and the input image they belong to
  * \param[in,out] im_histograms - scaled response histograms for each image in imgs
  * */
-void BagOfFeatures::computeResponseHistogram(const ::std::vector<::cv::Mat*> imgs, const ::cv::Mat& cluster_labels, const ::std::vector<int>& image_number, ::cv::Mat& im_histograms)
+void BagOfFeatures::computeResponseHistogram(const ::std::vector<::cv::Mat>& imgs, const ::cv::Mat& cluster_labels, const ::std::vector<int>& image_number, ::cv::Mat& im_histograms)
 {
 	::std::vector<float> temp(m_dictionarySize, 0.0);
 	::std::vector< ::std::vector<float> > v_im_histograms(imgs.size(), temp);
