@@ -25,6 +25,8 @@
 
 void createDataset(const ::std::string& path, ::std::vector<::cv::Mat>& images, ::std::vector<int>& labels);
 void classifierTestGeorge();
+void processVideoWithClassifier(const ::std::string& video_path, const ::std::string& video_filename, const BagOfFeatures& bow);
+void processImagesWithClassifier(const ::std::string& images_path, const BagOfFeatures& bow);
 
 void processVideo()
 {
@@ -538,46 +540,142 @@ void createDataset(const ::std::string& path, ::std::vector<::cv::Mat>& images, 
 
 }
 
-void classifierTestGeorge()
+void trainClassifier(const ::std::string& train_path)
 {
 	// need to give as input the number of words
-	//::std::vector<::cv::Mat> training_imgs;
-	//::std::vector<int> training_labels;
+	::std::vector<::cv::Mat> training_imgs;
+	::std::vector<int> training_labels;
 	//::std::string train_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\train\\";
-	//createDataset(train_path, training_imgs, training_labels);
-	//
-	//BagOfFeatures bow;
-	//bow.train(training_imgs, training_labels);
-	//bow.save("./");
+	createDataset(train_path, training_imgs, training_labels);
+	
+	BagOfFeatures bow;
+	bow.train(training_imgs, training_labels);
+	bow.save("./");
+}
 
-	BagOfFeatures bow_from_file;
-	bow_from_file.load("./");
+void classifierTestGeorge()
+{
+	//::std::string train_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\train\\";
+	//::std::string train_path = "C:\\Users\\RC\\Dropbox\\Classifier_test_dataset\\train\\";
 
-	::std::vector<::cv::Mat> validation_imgs;
-	::std::vector<int> validation_labels;
-	::std::string validate_path = "C:\\Users\\RC\\Documents\\Repos\\software\\ContactSVM\\BagOfWords\\validate\\";
-	createDataset(validate_path, validation_imgs, validation_labels);
+	//trainClassifier(train_path);
 
-	::cv::namedWindow("my_window",CV_WINDOW_AUTOSIZE);
-	float response = 0;
-	for (int i = 0; i < validation_imgs.size(); ++i)
-	{
-		if (!bow_from_file.predict(validation_imgs[i], response))
-			::std::cout << "Classifier failed on image " << i << ::std::endl;
+	BagOfFeatures bow;
+	bow.load(".\\classifier_surgery\\");
+
+	//::std::string video_path = "Z:\\Public\\Data\\Cardioscopy_project\\2017-01-26_bypass_cardioscopy\\Videos_2017-01-26\\";
+	//::std::string video_filename = "2017-01-26_12-42-26_classifier test_setup.avi";
+	//processVideoWithClassifier(video_path, video_filename, bow);
+
+
+	::std::string image_paths = "Z:\\Public\\Data\\Cardioscopy_project\\2017-01-26_bypass_cardioscopy\\Videos_2017-01-26\\2017-01-26_15-00-57\\";
+	processImagesWithClassifier(image_paths, bow);
+
+}
+
+void processImagesWithClassifier(const ::std::string& images_path, const BagOfFeatures& bow)
+{
+
+	::std::vector<::std::string> imgPaths;
+	double num_of_frames = getImList(imgPaths, images_path); //conventionally the input arguments go first followed by the output arguments (code styling comment)
+
+	std::sort(imgPaths.begin(), imgPaths.end(), numeric_string_compare);
+
+	::std::cout << num_of_frames << ::std::endl;
+
+	
+	::std::string output_path = "Z:\\Public\\Data\\Cardioscopy_project\\2017-01-26_bypass_cardioscopy\\class_post_process\\2017-01-26_15-00-57\\";
+	
+	::std::ofstream contactStream(output_path + "contact_data.txt");
+	
+	::cv::Mat frame;
+	::cv::namedWindow("MyVideo",CV_WINDOW_AUTOSIZE);
+
+	float response = 0.0;
+	::std::vector<int> responses;
+	char output_filename[100];
+	int counter = 0;
+	int framesLeft;
+	::std::string final_output;
+    for (int i = 0; i < num_of_frames; ++i)
+    {
+		frame = ::cv::imread(images_path + imgPaths[i]);
+
+		if (!bow.predict(frame, response))
+			::std::cout << "Classifier failed to estimate contact" << ::std::endl;
+	
+		responses.push_back(response);
 
 		::cv::Point center(20,50);
 		::cv::Scalar color(0,255,255);
 
 		if (response == 1)
-			::cv::circle(validation_imgs[i], center, 10, color, -1);
+			::cv::circle(frame, center, 10, color, -1);
 
-		::cv::imshow("my_window", validation_imgs[i]);
-		::cv::waitKey();
+		sprintf(output_filename,"image_%010d.png", ++counter);
+		final_output = output_path + output_filename;
 
-	}
+		//::std::cout << output_filename << ::std::endl;
+		::cv::imwrite(final_output, frame);
+		contactStream << response << ::std::endl;
+		//::std::cout << "response:" << response << ::std::endl;
+        //imshow("MyVideo", frame);          
+        //if(::cv::waitKey(0) == 27) break;
+    }
+
+	contactStream.close();
+
 }
 
 
+void processVideoWithClassifier(const ::std::string& video_path, const ::std::string& video_filename, const BagOfFeatures& bow)
+{
+	::cv::VideoCapture v(video_path + video_filename);
+	double num_of_frames = v.get(CV_CAP_PROP_FRAME_COUNT); 
+
+	::std::cout << num_of_frames << ::std::endl;
+
+	//::std::ofstream contactStream("C:\\Users\\RC\\Dropbox\\Videos\\processed_videos\\ctr_nav_cr_06\\contact_data.txt");
+
+
+	::cv::Mat frame;
+	::cv::namedWindow("MyVideo",CV_WINDOW_AUTOSIZE);
+
+	float response = 0.0;
+	::std::vector<int> responses;
+	char output_filename[100];
+	int counter = 0;
+	int framesLeft;
+	::std::string final_output;
+    for (int i = 0; i < num_of_frames; ++i)
+    {
+		framesLeft = v.read(frame); 
+
+		if (!bow.predict(frame, response))
+			::std::cout << "Classifier failed to estimate contact" << ::std::endl;
+	
+		responses.push_back(response);
+
+		::cv::Point center(20,50);
+		::cv::Scalar color(0,255,255);
+
+		if (response == 1)
+			::cv::circle(frame, center, 10, color, -1);
+
+		//sprintf(output_filename,"image_%010d.png", ++counter);
+		//final_output = output_for_images + output_filename;
+
+		//::std::cout << output_filename << ::std::endl;
+		//::cv::imwrite(final_output, frame);
+		//contactStream << response << ::std::endl;
+		::std::cout << "response:" << response << ::std::endl;
+        imshow("MyVideo", frame);          
+        if(::cv::waitKey(0) == 27) break;
+    }
+
+	//contactStream.close();
+
+}
 
 
 int main( int argc, char** argv )
