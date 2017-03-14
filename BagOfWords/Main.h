@@ -7,6 +7,7 @@
 
 #include "BOW_lowlevel.h"
 #include "classifier.h"
+#include "dataset.h"
 
 bool trainBOW(std::string path, std::string output_path);
 bool predictBOW(std::string path, ::cv::Ptr< ::cv::ml::SVM> svm, ::cv::Mat vocabulary);
@@ -20,3 +21,13 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM = true, bool visua
 
 void processVideo();
 void classifierTest();
+
+void classifierTestGeorge();
+void processVideoWithClassifier(const ::std::string& video_path, const ::std::string& video_filename, const BagOfFeatures& bow);
+void processImagesWithClassifier(const ::std::string& images_path, const BagOfFeatures& bow);
+
+
+void createDataset(const ::std::string& path, ::std::vector<::cv::Mat>& images, ::std::vector<int>& labels);
+bool trainClassifier(const ::std::string& train_path, BagOfFeatures& bow);
+void trainClassifier(const ::std::string& train_path);
+

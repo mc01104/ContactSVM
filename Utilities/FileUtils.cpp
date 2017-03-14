@@ -6,6 +6,8 @@
 #include <vector>
 
 
+
+
 bool getClassesNames(std::vector<std::string>& classes, std::string path)
 {
 	
@@ -79,3 +81,75 @@ int getImagesFromPath(std::vector<cv::Mat*>& imVector, std::string path)
     }
     return count;
 }
+
+
+/**
+ * @brief: Replace a substring in a string efficiently
+ *
+ * @author: Ben
+ *
+ * \param[in,out] source - the string to be modified
+ * \param[in] from - the substring to be changed
+ * \param[in] to - the substring to place instead of 'from'
+ * */
+void replaceInStr( string& source, const string& from, const string& to )
+{
+    string newString;
+    newString.reserve( source.length() );
+    string::size_type lastPos = 0;
+    string::size_type findPos;
+
+    while( string::npos != ( findPos = source.find( from, lastPos )))
+    {
+        newString.append( source, lastPos, findPos - lastPos );
+        newString += to;
+        lastPos = findPos + from.length();
+    }
+
+    // Care for the rest after last occurrence
+    newString += source.substr( lastPos );
+
+    source.swap( newString );
+}
+
+
+/**
+ * @brief: Check path for incorrect file separators, and replace them if needed
+ *
+ * @author: Ben
+ *
+ * \param[in] path - the input path
+ * \return the corrected path
+ * */
+::std::string checkPath(::std::string path)
+{
+    const ::std::string goodPathSeparator =
+    #ifdef LINUX
+            "/";
+    #else
+            "\\";
+    #endif
+
+    const ::std::string wrongPathSeparator =
+    #ifdef LINUX
+            "\\";
+    #else
+            "/";
+    #endif
+
+    replaceInStr(path, wrongPathSeparator, goodPathSeparator);
+
+    return path;
+}
+
+
+
+
+
+
+
+
+
+
+
+
