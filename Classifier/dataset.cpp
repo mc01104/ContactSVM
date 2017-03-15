@@ -94,8 +94,11 @@ bool Dataset::serializeInfo(const ::std::string output_path)
     catch ( const std::exception & e )
     {
             ::std::cerr << e.what();
+            throw("Error during dataset serialization");
             return false;
     }
+
+    return true;
 }
 
 
@@ -124,7 +127,8 @@ bool Dataset::createFromXML(::std::string& path)
     }
     catch ( const std::exception & e )
     {
-            ::std::cerr << e.what();
+            ::std::cerr << e.what();    
+            throw("Error during dataset deserialization");
             return false;
     }
 }
