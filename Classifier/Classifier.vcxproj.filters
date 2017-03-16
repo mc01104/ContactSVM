@@ -18,9 +18,15 @@
     <ClInclude Include="classifier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="dataset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="classifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dataset.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
