@@ -290,34 +290,64 @@ bool testBOW(std::string path, BOW_l bow, bool visualization, int delay, bool sa
 bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay, bool saveOutput)
 {
 
-    ::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
-    ::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
-
+    // Variables declaration and initialization
     ::std::vector< ::std::string> imList;
-    //path = "F:\\tmp\\2017-01-26_12-46-26";
-    int count = getImList(imList, path);
-    std::sort(imList.begin(), imList.end(), numeric_string_compare);
+    int count = 0;
+
+    ::std::vector<float> reponses;
+    int response_contact = 0, response_free = 0;
 
     ::std::vector< ::std::string> classes = bow.getClasses();
 
-    ::std::vector<float> reponses;
-
-    int response_contact = 0, response_free = 0;
-
     std::vector<float> timings;
+    ::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
+    ::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
 
-    for(int i=0; i<imList.size();i++)
+
+    // Open a videocapture if the testpath is a video file
+    bool isVideo = false;
+    ::cv::VideoCapture cap;
+    ::std::vector< ::std::string> vid_extensions = {".avi", ".mp4"};
+
+    for ( ::std::string ext : vid_extensions)
+    {
+        if (path.find(ext)!=std::string::npos)
+        {
+            isVideo = true;
+            cap.open(path);
+        }
+    }
+
+    if (!isVideo)
+    {
+        count = getImList(imList, path);
+        std::sort(imList.begin(), imList.end(), numeric_string_compare);
+    }
+
+    int img_index = 0;
+
+    while (true)
     {
         float response = 0.0;
-        std::string filepath = checkPath(path + "/" + imList[i]);
+        ::cv::Mat img;
 
-        const ::cv::Mat img = ::cv::imread(filepath);
+        if (isVideo)
+        {
+            if (!cap.read(img))
+                break;
+        }
+        else
+        {
+            if (img_index > imList.size())
+                break;
+            std::string filepath = checkPath(path + "/" + imList[img_index]);
+            img = ::cv::imread(filepath);
+        }
 
         t1 = ::std::chrono::steady_clock::now();
 
         if (bow.predict(img,response))
         {
-
             t2 = ::std::chrono::steady_clock::now();
             std::chrono::microseconds ms = std::chrono::duration_cast<std::chrono::microseconds> (t2-t1);
             timings.push_back(ms.count());
@@ -343,7 +373,10 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
                 if (key == 27) break;
             }
         }
-        else ::std::cout << "Error in prediction" << ::std::endl;
+        else ::std::cout << "Error in BOW prediction" << ::std::endl;
+
+
+        img_index ++;
     }
 
     if (saveOutput)
@@ -355,9 +388,11 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
         fs.release();
     }
 
-    std::cout << "Number of images: " << imList.size() << ::std::endl;
-    std::cout << "Percent of contact: " << response_contact*1.0/imList.size() << ::std::endl;
-    std::cout << "Percent of Free: " << response_free*1.0/imList.size() << ::std::endl;
+    // not necessarily all images are processed, so imList.size() is not appropriate
+    // timings has a number of elements equal to the number of processed images
+    std::cout << "Number of images: " << timings.size() << ::std::endl;
+    std::cout << "Percent of contact: " << response_contact*1.0/timings.size() << ::std::endl;
+    std::cout << "Percent of Free: " << response_free*1.0/timings.size() << ::std::endl;
 
     double sum = std::accumulate(timings.begin(), timings.end(), 0.0);
     double mean = sum/1000.0 / timings.size();
@@ -376,17 +411,20 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
 /**
  * @brief: Process images using parameters described in a CSV file
  *
- * The CSV file should contain two fields:
- *      - base_folder: folder where the classifier files and the dataset is (in test/train/validate folders)
- *      - folder_surgeries: base folder with images from surgeries
+ * The CSV file should contain three fields:
+ *      - train_path: folder where the training dataset is (should have subdirectories with classes names containing png images)
+ *      - output_path: base path for saving/loading the classifier files
+ *      - test_path: path with test images
  *
- * For now, only pre-trained classifier than can be loaded from XML files is implemented
+ * Additionnaly, it has two optional fields:
+ *      - trainSVM: 1 for training the SVM, 0 to load it from the saved files
+ *      - visualize: 1 for visualizing test results in a window
  *
  * @author: Ben & George
  *
  * \param[in] csvFilePath - the path to the CSV file
- * \param[in] trainSVM - train the SVM if true, load from file otherwise. Defaults to true
- * \param[in] visualize - visualize the classifier output in a window or not. Defaults to false
+ * \param[in] trainSVM - train the SVM if true, load from file otherwise. Defaults to true, overrided if present in CSV file
+ * \param[in] visualize - visualize the classifier output in a window or not. Defaults to false, overrided if present in CSV file
  *
  * \return true if no error occured
  * */
@@ -462,6 +500,7 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
             return false;
     }
 
+    // TODO in testBOW: check if test_path is a video. In this case, call testBOW_video
     testBOW(test_path,bow, visualize);
     cv::waitKey(0);
 
