@@ -19,7 +19,7 @@ class Dataset
         protected:
 
             ::std::vector< ::std::string> m_classes;
-            std::vector< ::std::string> m_imList;
+            ::std::vector< ::std::string> m_imList;
             ::std::string m_mainPath;
             ::std::vector< ::cv::Mat> m_images;
             ::std::vector<int> m_labels;
@@ -29,7 +29,7 @@ class Dataset
 		
                 // Constructor/destructor
                 Dataset();
-                Dataset(::std::string& path);
+                Dataset(const ::std::string& path);
                 ~Dataset();
 
                 // accessors
@@ -40,11 +40,11 @@ class Dataset
                 bool isInit() const {return m_initialized;};
 
                 // methods
-                void initDataset(::std::string& path);
+                void initDataset(const ::std::string& path);
                 void clear();
 
                 bool serializeInfo(const ::std::string output_path);
-                bool createFromXML(::std::string& path);
+                bool createFromXML(const ::std::string& path);
 
 };
 

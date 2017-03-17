@@ -17,7 +17,7 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, i
 
 
 
-bool processFromFile(::std::string csvFilePath, bool trainSVM = true, bool visualize = false, int testType = 0);
+bool processFromFile(::std::string csvFilePath, bool trainSVM = true, bool visualize = false);
 
 void processVideo();
 void classifierTest();
@@ -27,7 +27,7 @@ void processVideoWithClassifier(const ::std::string& video_path, const ::std::st
 void processImagesWithClassifier(const ::std::string& images_path, const BagOfFeatures& bow);
 
 
-void createDataset(const ::std::string& path, ::std::vector<::cv::Mat>& images, ::std::vector<int>& labels);
-bool trainClassifier(const ::std::string& train_path, BagOfFeatures& bow);
+void createDataset(const ::std::string& path, ::std::vector< ::cv::Mat>& images, ::std::vector<int>& labels);
+bool trainClassifier(::std::string& train_path, BagOfFeatures& bow);
 void trainClassifier(const ::std::string& train_path);
-
+bool trainClassifier(const Dataset& dataset, BagOfFeatures& bow);

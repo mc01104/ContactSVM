@@ -1,3 +1,11 @@
-%comment
-base_folder,/mnt/25CB1D633D27ACE0/Data/ContactDetection_project/ContactDetection_data/Surgery_dev/
-folder_surgeries,/mnt/25CB1D633D27ACE0/Data/ContactDetection_project/Surgery_images/
+%
+% Paths are mandatory. Program will not run if those are not set
+%
+train_path,/mnt/25CB1D633D27ACE0/Data/ContactDetection_project/ContactDetection_data/Surgery_dev_20170314/train/
+output_path,/mnt/25CB1D633D27ACE0/Data/ContactDetection_project/ContactDetection_data/Surgery_dev_20170314/output_
+test_path,/mnt/25CB1D633D27ACE0/Data/ContactDetection_project/Surgery_images/Jan26_2017/2017-01-26_12-42-26/
+%
+% Optional ones. If not set, trainSVM will default to 1 and visualize to 0 in the program
+%
+trainSVM,1
+visualize,0

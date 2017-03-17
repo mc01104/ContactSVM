@@ -16,7 +16,7 @@ Dataset::~Dataset()
 {
 }
 
-Dataset::Dataset(::std::string& path)
+Dataset::Dataset(const ::std::string& path)
 {
     initDataset(path);
 }
@@ -29,15 +29,16 @@ Dataset::Dataset(::std::string& path)
  *
  * \param[in] path - the path to the root directory of the dataset. Must contain subdirectories with classes names and images inside
  * */
-void Dataset::initDataset(::std::string& path)
+void Dataset::initDataset(const ::std::string& path)
 {
     // start by clearing all data if the dataset was initialized before
     this->clear();
 
-    path = checkPath(path + "/");
+    m_mainPath = checkPath(path + "/");
 
     // list class names in input path and extract images
     int class_id = 0;
+    int imCount = 0;
     if (getClassesNames(m_classes, path))
     {
         for (std::string className : m_classes)
@@ -46,8 +47,9 @@ void Dataset::initDataset(::std::string& path)
             for (int i=0;i<count;i++)
             {
                 m_labels.push_back(class_id);
-                m_images.push_back(::cv::imread(m_imList[i]));
+                m_images.push_back(::cv::imread(checkPath(path + className + "/" + m_imList[imCount+i]) ));
             }
+            imCount += count;
             class_id++;
         }
     }
@@ -55,7 +57,6 @@ void Dataset::initDataset(::std::string& path)
     if (m_imList.size() != m_labels.size())
             throw("Error creating the training dataset -> images and labels are not equal in number");
 
-    m_mainPath = path;
     m_initialized = true;
 }
 
@@ -115,7 +116,7 @@ bool Dataset::serializeInfo(const ::std::string output_path)
  * \param[in] path - the path in which DATASET.XML is
  * \return true if loaded correctly, false if an error occured
  * */
-bool Dataset::createFromXML(::std::string& path)
+bool Dataset::createFromXML(const ::std::string& path)
 {
     try
     {

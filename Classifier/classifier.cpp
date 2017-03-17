@@ -222,6 +222,27 @@ bool BagOfFeatures::train(const ::std::vector<::cv::Mat>& imgs, const ::std::vec
 }
 
 
+
+/**
+ * @brief: Train a BagOfFeatures classifier - overloaded function to use a dataset class as input
+ *
+ * @author: Ben & George
+ *
+ * \param[in] dataset - a dataset
+ *
+ * \return true if the BOF classifier was correctly trained
+ * */
+bool BagOfFeatures::train(const Dataset& dataset)
+{
+    if (!dataset.isInit())
+        return false;
+
+    setClasses(dataset.getClasses());
+    return train(dataset.getImages(),dataset.getLabels());
+}
+
+
+
 /**
  * @brief: Predict the class of a given input image
  *
@@ -301,6 +322,21 @@ bool BagOfFeatures::predict(const ::cv::Mat img, float& response) const
 {
     return m_classes;
 }
+
+
+/**
+ * @brief: Mutator method to set the list of classes in the BOF classifier
+ *
+ * @author: Ben & George
+ *
+ * \return a vector of strings containing the classes
+ * */
+void BagOfFeatures::setClasses(::std::vector< ::std::string> classes)
+{
+    m_classes = classes;
+}
+
+
 
 
 /**
