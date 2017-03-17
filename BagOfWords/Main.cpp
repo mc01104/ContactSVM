@@ -453,6 +453,7 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
             return false;
 
         bow.save(output_path);
+        dataset.serializeInfo(output_path);
     }
 
     else
