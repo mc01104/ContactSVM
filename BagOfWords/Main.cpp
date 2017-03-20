@@ -44,7 +44,7 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
     int count = 0;
 
     ::std::vector<float> reponses;
-    int response_contact = 0, response_free = 0;
+    int response_contact = 0, response_free = 0; //??
 
     ::std::vector< ::std::string> classes = bow.getClasses();
 
@@ -52,12 +52,16 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
     ::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
     ::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
 
-
+	
     // Open a videocapture if the testpath is a video file
     bool isVideo = false;
     ::cv::VideoCapture cap;
-    ::std::vector< ::std::string> vid_extensions = {".avi", ".mp4"};
 
+    //::std::vector< ::std::string> vid_extensions = {'.avi', '.mp4'};     // this line doesn't work for me somehow... I tried other compilers as well. The syntax is correct but I cannot compile it with the initializer list
+	::std::vector<::std::string> vid_extensions;
+	vid_extensions.push_back(".avi");
+	vid_extensions.push_back(".mp4");
+	
     for ( ::std::string ext : vid_extensions)
     {
         if (path.find(ext)!=std::string::npos)
@@ -69,13 +73,13 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
 
     if (!isVideo)
     {
-        count = getImList(imList, path);
+        count = getImList(imList, checkPath(path + "/" ));
         std::sort(imList.begin(), imList.end(), numeric_string_compare);
     }
 
     int img_index = 0;
 
-    while (true)
+    while (img_index < count)
     {
         float response = 0.0;
         ::cv::Mat img;
@@ -131,7 +135,7 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
     if (saveOutput)
     {
         // Save all contact values in an XML file
-        ::std::string fname = path + "contact_values.xml";
+        ::std::string fname = checkPath(path + "/" + "contact_values.xml");
         cv::FileStorage fs(fname, cv::FileStorage::WRITE);
         fs << "contact" << reponses;
         fs.release();
@@ -503,7 +507,8 @@ void processVideoWithClassifier(const ::std::string& video_path, const ::std::st
 int main( int argc, char** argv )
 {
 
-    ::std::string csvFilePath = "./folders_contactdetection.csv";
+    //::std::string csvFilePath = "./folders_contactdetection.csv";
+	::std::string csvFilePath = "./folders_contactdetection_example_g.csv";
     processFromFile(csvFilePath);
 
 	return 0;

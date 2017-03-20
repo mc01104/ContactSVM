@@ -35,7 +35,7 @@ void Dataset::initDataset(const ::std::string& path)
     this->clear();
 
     m_mainPath = checkPath(path + "/");
-
+	
     // list class names in input path and extract images
     int class_id = 0;
     int imCount = 0;
@@ -43,11 +43,11 @@ void Dataset::initDataset(const ::std::string& path)
     {
         for (std::string className : m_classes)
         {
-            int count = getImList(m_imList, checkPath(path + className));
+            int count = getImList(m_imList, checkPath(path + "/" + className));
             for (int i=0;i<count;i++)
             {
                 m_labels.push_back(class_id);
-                m_images.push_back(::cv::imread(checkPath(path + className + "/" + m_imList[imCount+i]) ));
+                m_images.push_back(::cv::imread(checkPath(path + "/" + className + "/" + m_imList[imCount+i]) ));
             }
             imCount += count;
             class_id++;

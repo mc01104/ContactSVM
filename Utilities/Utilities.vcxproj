@@ -144,13 +144,11 @@
   <ItemGroup>
     <ClInclude Include="CSV_reader.h" />
     <ClInclude Include="FileUtils.h" />
-    <ClInclude Include="HTransform.h" />
     <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CSV_reader.cpp" />
     <ClCompile Include="FileUtils.cpp" />
-    <ClCompile Include="HTransform.cpp" />
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
