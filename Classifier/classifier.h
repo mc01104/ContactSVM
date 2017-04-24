@@ -95,6 +95,8 @@ class BagOfFeatures : public ImageClassifier
 
         virtual bool predict(const ::cv::Mat img, float& response) const ;
 
+		// experimental
+		void	autoLabelImages(const Dataset& dataset);
     // accessor/mutators functions
     public:
         ::std::vector< ::std::string> getClasses();
@@ -110,6 +112,12 @@ class BagOfFeatures : public ImageClassifier
         void featureExtraction(const ::std::vector< ::cv::Mat>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors);
 
         void computeResponseHistogram(const ::std::vector< ::cv::Mat>& imgs, const ::cv::Mat& cluster_labels, const ::std::vector<int>& image_number, ::cv::Mat& im_histograms);
+
+		void computeClustersInFeatureSpace(const Dataset& dataset, ::cv::Mat& feature_voc, ::cv::Mat& resp);
+
+		void applyClusteringInFeatureSpace(const Dataset& dataset, const ::cv::Mat& feature_voc, ::cv::Mat& resp, ::std::vector<int>& labels);
+
+		void saveImages(const Dataset& dataset, const ::std::vector<int>& labels);
 };
 
 

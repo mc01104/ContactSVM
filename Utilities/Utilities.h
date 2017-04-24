@@ -172,3 +172,24 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option);
 bool cmdOptionExists(char** begin, char** end, const std::string& option);
 
 bool file_exists(const ::std::string& filename);
+
+template <typename T>
+::std::string num2str(T& inputVariable)
+{
+	::std::ostringstream convert;   
+
+	convert << inputVariable;   
+
+	return convert.str();
+}
+
+template <typename T>
+vector<T> linspace(T a, T b, size_t N) {
+  T h = (b - a) / static_cast<T>(N-1);
+  vector<T> xs(N);
+  typename vector<T>::iterator x;
+  T val;
+  for (x = xs.begin(), val = a; x != xs.end(); ++x, val += h)
+    *x = val;
+  return xs;
+}

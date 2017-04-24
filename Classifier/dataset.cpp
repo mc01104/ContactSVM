@@ -21,6 +21,18 @@ Dataset::Dataset(const ::std::string& path)
     initDataset(path);
 }
 
+void Dataset::initUnlabelledDataset(const std::string& path)
+{
+    this->clear();
+
+    m_mainPath = checkPath(path + "/");
+	
+    int imCount = getImList(m_imList, checkPath(path + "/"));
+	for (int i = 0; i < imCount; ++i)
+		m_images.push_back(::cv::imread(checkPath(path + "/" + m_imList[i]) ));
+    m_initialized = true;
+
+}
 
 /**
  * @brief: Initialize a dataset and load images, classes info ...

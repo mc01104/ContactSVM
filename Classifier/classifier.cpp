@@ -444,3 +444,104 @@ void BagOfFeatures::computeResponseHistogram(const ::std::vector<::cv::Mat>& img
 		m_scaling_stds.push_back(stdev.val[0]);
 	}
 }
+
+
+void BagOfFeatures::autoLabelImages(const Dataset& dataset)
+{
+	::cv::Mat feature_voc;
+	//::std::vector<::cv::Mat> hists;
+	::cv::Mat hists;
+	::std::vector<int> labels;
+	this->computeClustersInFeatureSpace(dataset, feature_voc, hists);
+
+	this->applyClusteringInFeatureSpace(dataset, feature_voc, hists, labels);
+
+	this->saveImages(dataset, labels);
+}
+
+void BagOfFeatures::saveImages(const Dataset& dataset, const ::std::vector<int>& labels)
+{
+	::std::vector<::std::string> img_paths = dataset.getImagesList();
+	::std::vector<::cv::Mat> imgs = dataset.getImages();
+	::std::string mainPath = dataset.getMainPath();
+	for (int i = 0; i < labels.size(); ++i)
+		::cv::imwrite(checkPath(mainPath + "/" + num2str(labels[i]) + "/" + img_paths[i]), imgs[i]);
+}
+
+void BagOfFeatures::applyClusteringInFeatureSpace(const Dataset& dataset, const ::cv::Mat& feature_voc, ::cv::Mat& resp, ::std::vector<int>& labels)
+{
+	//::std::vector<int> clusterLabel;
+
+	// kmeans and knn needs to become a class...
+	::cv::Ptr< ::cv::ml::KNearest> knn;
+	knn = ::cv::ml::KNearest::create();
+    knn->setAlgorithmType(::cv::ml::KNearest::Types::BRUTE_FORCE);
+
+	::cv::Mat mat_words_labels(feature_voc.rows, 1, CV_32S);
+
+	for (int i = 0; i < feature_voc.rows; ++i) 
+		mat_words_labels.at<int>(i) = i;
+
+	knn->clear();
+	knn->setDefaultK(1);
+
+	knn->train(feature_voc, ::cv::ml::ROW_SAMPLE, mat_words_labels);	
+
+	for (int i = 0; i < resp.rows; ++i)
+		labels.push_back(knn->predict(resp.row(i)));
+
+}
+
+void BagOfFeatures::computeClustersInFeatureSpace(const Dataset& dataset, ::cv::Mat& feature_voc, ::cv::Mat& resp)
+{
+	std::vector<cv::KeyPoint> keyPoints;
+	::cv::Mat descriptors;
+
+	std::vector<int> v_word_labels;
+	for (int i = 0; i < m_vocabulary.rows; ++i) 
+		v_word_labels.push_back(i);
+
+	::std::vector<::cv::Mat> imgs = dataset.getImages();
+	::std::vector<::cv::Mat> response_hists;
+
+	//::cv::Mat resp;
+	for (int i = 0; i < imgs.size(); ++i)
+	{
+		m_featureDetector->detect(imgs[i], keyPoints);
+		m_descriptorExtractor->compute(imgs[i], keyPoints,descriptors);
+	
+		// put descriptors in right format for kmeans clustering
+		if(descriptors.type()!=CV_32F) 
+			descriptors.convertTo(descriptors, CV_32F); 
+
+		// Vector quantization of words in image
+		::cv::Mat wordsInImg;
+		m_knn->findNearest(descriptors,1,wordsInImg);  // less than 1 ms here
+	
+		// construction of response histogram
+		::std::vector<float> temp(m_vocabulary.rows, 0.0);
+
+		for(int i = 0; i < wordsInImg.rows; ++i)
+			temp[wordsInImg.at<float>(i,0)]++;
+
+		// George: Is there a way to avoid transposing?  it is wasted computation, and depending on the implementation can take some time.
+		::cv::Mat response_histogram;
+		::cv::transpose(::cv::Mat(temp),response_histogram); // make a row-matrix from the column one made from the vector-
+
+		// Normalization of response histogram
+		::cv::Mat col;
+		for (int i = 0; i < response_histogram.cols; ++i)
+		{
+			col = response_histogram.col(i);
+
+			col = col - m_scaling_means[i];
+			col = col / m_scaling_stds[i];
+		}
+
+		resp.push_back(response_histogram);
+	}
+
+	::cv::Mat cluster_labels_training;
+	::cv::TermCriteria tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
+	::cv::kmeans(resp, 3, cluster_labels_training, tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, feature_voc);
+}

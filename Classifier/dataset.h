@@ -16,7 +16,7 @@
 class Dataset
 {
 
-        protected:
+	protected:
 
             ::std::vector< ::std::string> m_classes;
             ::std::vector< ::std::string> m_imList;
@@ -39,8 +39,11 @@ class Dataset
                 ::std::vector<int> getLabels() const {return m_labels;};
                 bool isInit() const {return m_initialized;};
 
+				::std::string getMainPath() const {return m_mainPath;};
+
                 // methods
                 void initDataset(const ::std::string& path);
+				void initUnlabelledDataset(const std::string& path);
                 void clear();
 
                 bool serializeInfo(const ::std::string output_path);

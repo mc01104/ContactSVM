@@ -21,7 +21,7 @@
 #include "helper_parseopts.h"
 #include "CSV_reader.h"
 
-
+int find_opencv_version();
 
 /**
  * @brief: Test the classifier with a list of images or a video
@@ -45,7 +45,8 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
 
     ::std::vector<float> reponses;
     int response_contact = 0, response_free = 0; //??
-
+	int response_tissue = 0;
+	int response_chordae = 0;
     ::std::vector< ::std::string> classes = bow.getClasses();
 
     std::vector<float> timings;
@@ -105,21 +106,32 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
             std::chrono::microseconds ms = std::chrono::duration_cast<std::chrono::microseconds> (t2-t1);
             timings.push_back(ms.count());
 
-            if (classes[(int) response] == "Free")
+            if (classes[(int) response] == "Tissue")
             {
                 response = 0.0;
-                response_free++;
+                response_tissue++;
             }
-            else
+            else if (classes[(int) response] == "Free")
             {
                 response = 1.0;
-                response_contact++;
+                response_free++;
             }
+			else if (classes[(int) response] == "Chordae")
+			{
+				response = 2.0;
+				response_chordae++;
+			}
+			else if (classes[(int) response] == "Valve")
+			{
+				response = 3.0;
+				response_contact++;
+			}
 
             if(visualization)
             {
 
-                ::cv::putText(img,cv::String(::std::to_string(response).c_str()),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
+                //::cv::putText(img,cv::String(::std::to_string(response).c_str()),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
+				::cv::putText(img,cv::String(classes[(int) response]),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
                 ::cv::imshow("Image", img);
                 char key = ::cv::waitKey(delay);
 
@@ -144,8 +156,9 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
     // not necessarily all images are processed, so imList.size() is not appropriate
     // timings has a number of elements equal to the number of processed images
     std::cout << "Number of images: " << timings.size() << ::std::endl;
-    std::cout << "Percent of contact: " << response_contact*1.0/timings.size() << ::std::endl;
+    std::cout << "Percent of Valve: " << response_contact*1.0/timings.size() << ::std::endl;
     std::cout << "Percent of Free: " << response_free*1.0/timings.size() << ::std::endl;
+	std::cout << "Percent of Tissue: " << response_tissue*1.0/timings.size() << ::std::endl;
 
     double sum = std::accumulate(timings.begin(), timings.end(), 0.0);
     double mean = sum/1000.0 / timings.size();
@@ -189,6 +202,8 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
     ::std::vector< ::std::string> folder;
     ::std::vector< float> numData;
 
+	bool labelFlag = false;
+
     bool pathOK = true;
 
     if (op.getData(std::string("train_path"),folder))
@@ -231,9 +246,13 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
         visualize = numData[0];
     }
 
+    if (op.getData(std::string("label"),numData))
+    {
+        labelFlag = numData[0];
+    }
 
 
-    BagOfFeatures bow;
+    BagOfFeatures bow; 
 
     if (trainSVM)
     {
@@ -247,7 +266,13 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
         bow.save(output_path);
         dataset.serializeInfo(output_path);
     }
-
+	else if (labelFlag)
+	{
+        Dataset dataset;
+        dataset.initUnlabelledDataset(test_path);
+		bow.load(output_path);
+		bow.autoLabelImages(dataset);
+	}
     else
     {
         if (! (bow.load(output_path)) )
@@ -510,6 +535,17 @@ int main( int argc, char** argv )
     //::std::string csvFilePath = "./folders_contactdetection.csv";
 	::std::string csvFilePath = "./folders_contactdetection_example_g.csv";
     processFromFile(csvFilePath);
-
+	//find_opencv_version();
 	return 0;
 }
+
+ 
+int find_opencv_version()
+{
+  ::std::cout << "OpenCV version : " << CV_VERSION << endl;
+  ::std::cout << "Major version : " << CV_MAJOR_VERSION << endl;
+  ::std::cout << "Minor version : " << CV_MINOR_VERSION << endl;
+  ::std::cout << "Subminor version : " << CV_SUBMINOR_VERSION << endl;
+
+  return 0;
+ }

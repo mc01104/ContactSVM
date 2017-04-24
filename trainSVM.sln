@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BagOfWords", "BagOfWords\Ba
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Classifier", "Classifier\Classifier.vcxproj", "{1511E745-FAB6-4E39-B41F-AD11773D1B3B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SemiAutomaticImageLabelling", "SemiAutomaticImageLabelling\SemiAutomaticImageLabelling.vcxproj", "{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -74,6 +76,16 @@ Global
 		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Release|Win32.Build.0 = Release|Win32
 		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Release|x64.ActiveCfg = Release|x64
 		{1511E745-FAB6-4E39-B41F-AD11773D1B3B}.Release|x64.Build.0 = Release|x64
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Debug|Win32.Build.0 = Debug|Win32
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Debug|x64.ActiveCfg = Debug|Win32
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Release|Win32.ActiveCfg = Release|Win32
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Release|Win32.Build.0 = Release|Win32
+		{9A34D7C4-3A3E-49FD-B3E6-53B4AD4D849C}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

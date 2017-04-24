@@ -9,7 +9,7 @@
 #include "dataset.h"
 
 
-bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 1, bool saveOutput = false);
+bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 140, bool saveOutput = false);
 
 bool processFromFile(::std::string csvFilePath, bool trainSVM = true, bool visualize = false);
 
