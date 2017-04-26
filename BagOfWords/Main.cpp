@@ -279,7 +279,7 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
             return false; // TODO: raise exception ???
     }
 
-    testBOW(test_path,bow, visualize);
+    testBOW_hierarchical(test_path,bow, visualize);
     cv::waitKey(0);
 
     return true;
@@ -339,6 +339,203 @@ void createDataset(const ::std::string& path, ::std::vector< ::cv::Mat>& images,
 		images.push_back(::cv::imread(imgPaths[i]));
 
 }
+
+
+
+
+/*===============================
+ * == TEMPORARY TEST FUNCTIONS ==
+ * =============================*/
+
+
+
+
+
+/**
+ * @brief: Test the classifier with a list of images or a video
+ *
+ * @author: Ben & George
+ *
+ * \param[in] path - path to the video or to the directory containing the test images
+ * \param[in] bow - the BagOfFeatures classifier
+ * \param[in] visualization - visualize the classified images in an opencv window
+ * \param[in] delay - delay during visualization (defaults to 1). O makes it pause at each image waiting keyboard input
+ * \param[in] saveOutput - save classifier output in an XML file in the "path" directory
+ *
+ * Outputs only true for now, should be enhanced to handle errors and exceptions ...
+ * */
+bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualization, int delay, bool saveOutput)
+{
+
+    // Variables declaration and initialization
+    ::std::vector< ::std::string> imList;
+    int count = 0;
+
+    ::std::vector<float> reponses;
+    int response_contact = 0, response_free = 0; //??
+    int response_tissue = 0;
+    int response_chordae = 0;
+    ::std::vector< ::std::string> classes = bow.getClasses();
+
+    std::vector<float> timings;
+    ::std::chrono::steady_clock::time_point t1 = ::std::chrono::steady_clock::now();
+    ::std::chrono::steady_clock::time_point t2 = ::std::chrono::steady_clock::now();
+
+
+    // Open a videocapture if the testpath is a video file
+    bool isVideo = false;
+    ::cv::VideoCapture cap;
+
+    //::std::vector< ::std::string> vid_extensions = {'.avi', '.mp4'};     // this line doesn't work for me somehow... I tried other compilers as well. The syntax is correct but I cannot compile it with the initializer list
+    ::std::vector<::std::string> vid_extensions;
+    vid_extensions.push_back(".avi");
+    vid_extensions.push_back(".mp4");
+
+    for ( ::std::string ext : vid_extensions)
+    {
+        if (path.find(ext)!=std::string::npos)
+        {
+            isVideo = true;
+            cap.open(path);
+        }
+    }
+
+    if (!isVideo)
+    {
+        count = getImList(imList, checkPath(path + "/" ));
+        std::sort(imList.begin(), imList.end(), numeric_string_compare);
+    }
+
+    int img_index = 0;
+
+    while (img_index < count)
+    {
+        float response = 0.0;
+        ::cv::Mat img;
+
+        if (isVideo)
+        {
+            if (!cap.read(img))
+                break;
+        }
+        else
+        {
+            if (img_index > imList.size())
+                break;
+            std::string filepath = checkPath(path + "/" + imList[img_index]);
+            img = ::cv::imread(filepath);
+        }
+
+        t1 = ::std::chrono::steady_clock::now();
+
+        cv::Size blockSize(img.rows/3,img.cols/3);
+
+        for (int y = 0; y < img.rows; y += blockSize.height)
+        {
+            for (int x = 0; x < img.cols; x += blockSize.width)
+            {
+
+                cv::Rect rect =  cv::Rect(x,y, blockSize.width, blockSize.height);
+                if (rect.x + rect.width > img.cols) rect.width = img.cols-rect.x;
+                if (rect.y + rect.height > img.rows) rect.height = img.rows-rect.y;
+
+
+                cv::Mat test  = cv::Mat(img,rect);
+
+                if (bow.predict(test,response))
+                {
+                    if (classes[(int) response] == "Contact")
+                    {
+                        cv::rectangle(img,rect, cv::Scalar(0,255,0));
+                    }
+
+                }
+
+            }
+        }
+
+        if (bow.predict(img,response))
+        {
+            t2 = ::std::chrono::steady_clock::now();
+            std::chrono::microseconds ms = std::chrono::duration_cast<std::chrono::microseconds> (t2-t1);
+            timings.push_back(ms.count());
+
+            if (classes[(int) response] == "Tissue")
+            {
+                response = 0.0;
+                response_tissue++;
+            }
+            else if (classes[(int) response] == "Free")
+            {
+                response = 1.0;
+                response_free++;
+            }
+            else if (classes[(int) response] == "Chordae")
+            {
+                response = 2.0;
+                response_chordae++;
+            }
+            else if (classes[(int) response] == "Valve")
+            {
+                response = 3.0;
+                response_contact++;
+            }
+
+            if(visualization)
+            {
+
+                //::cv::putText(img,cv::String(::std::to_string(response).c_str()),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
+                ::cv::putText(img,cv::String(classes[(int) response]),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
+                ::cv::imshow("Image", img);
+                char key = ::cv::waitKey(delay);
+
+                if (key == 27) break;
+            }
+        }
+        else ::std::cout << "Error in BOW prediction" << ::std::endl;
+
+
+        img_index ++;
+    }
+
+    if (saveOutput)
+    {
+        // Save all contact values in an XML file
+        ::std::string fname = checkPath(path + "/" + "contact_values.xml");
+        cv::FileStorage fs(fname, cv::FileStorage::WRITE);
+        fs << "contact" << reponses;
+        fs.release();
+    }
+
+    // not necessarily all images are processed, so imList.size() is not appropriate
+    // timings has a number of elements equal to the number of processed images
+    std::cout << "Number of images: " << timings.size() << ::std::endl;
+    std::cout << "Percent of Valve: " << response_contact*1.0/timings.size() << ::std::endl;
+    std::cout << "Percent of Free: " << response_free*1.0/timings.size() << ::std::endl;
+    std::cout << "Percent of Tissue: " << response_tissue*1.0/timings.size() << ::std::endl;
+
+    double sum = std::accumulate(timings.begin(), timings.end(), 0.0);
+    double mean = sum/1000.0 / timings.size();
+
+    auto result = std::minmax_element(timings.begin(), timings.end());
+
+    std::cout << "Average prediction time (ms): " << mean << ::std::endl;
+
+    std::cout << "min is " << *result.first / 1000.0  << ::std::endl;
+    std::cout << "max is " << *result.second / 1000.0 << ::std::endl;
+
+    return true;
+}
+
+
+
+
+
+
+
+
+
+
 
 
 /*====================================

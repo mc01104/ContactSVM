@@ -11,6 +11,9 @@
 
 bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 140, bool saveOutput = false);
 
+bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 30, bool saveOutput = false);
+
+
 bool processFromFile(::std::string csvFilePath, bool trainSVM = true, bool visualize = false);
 
 void createDataset(const ::std::string& path, ::std::vector< ::cv::Mat>& images, ::std::vector<int>& labels);
