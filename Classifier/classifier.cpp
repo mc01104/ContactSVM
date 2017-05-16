@@ -212,7 +212,7 @@ bool BagOfFeatures::train(const ::std::vector<::cv::Mat>& imgs, const ::std::vec
 
 	// train SVM classifier
 	m_svm = ::cv::ml::SVM::create();
-	m_svm->setGamma(0.02);
+    m_svm->setGamma(1.0f/m_dictionarySize);
 
 	/*::cv::Mat labelsCV(labels, CV_32FC1);*/
 	//::std::vector<int> labelsInt(labels.size());
