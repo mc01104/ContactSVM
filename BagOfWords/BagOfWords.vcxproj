@@ -70,6 +70,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\..\..\include;C:\opencv\build\install\include;$(SolutionDir)\Utilities;$(SolutionDir)\Classifier;$(SolutionDir)\Lib;$(SolutionDir)\LieGroup</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

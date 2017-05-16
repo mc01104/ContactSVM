@@ -17,7 +17,7 @@ ImageClassifier::~ImageClassifier()
 }
 
 bool 
-ImageClassifier::predict(const ::std::vector<::cv::Mat>& imgs, ::std::vector<float>& labels) const
+ImageClassifier::predict(const ::std::vector<::cv::Mat>& imgs, ::std::vector<float>& labels) 
 {
 	if (imgs.size() < 1)
         // std::exception(char*) is a MS-specific function, not in the C++ standards
@@ -38,13 +38,15 @@ ImageClassifier::predict(const ::std::vector<::cv::Mat>& imgs, ::std::vector<flo
 }
 
 //@TODO - supports only LUCID feature descirptors at the moment
-BagOfFeatures::BagOfFeatures():
+BagOfFeatures::BagOfFeatures(bool gridFeatures):
 	ImageClassifier(),
 	m_dictionarySize(0),
-	m_trained(false)
+	m_trained(false),
+	m_gridFeatures(gridFeatures)
 {
 	m_featureDetector =  cv::FastFeatureDetector::create();
-	m_descriptorExtractor = cv::xfeatures2d::LUCID::create(2,1);
+	m_descriptorExtractor = cv::xfeatures2d::LUCID::create(3,1);
+	//m_descriptorExtractor = cv::xfeatures2d::SURF::create();
 
 	m_tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
 
@@ -196,11 +198,11 @@ bool BagOfFeatures::train(const ::std::vector<::cv::Mat>& imgs, const ::std::vec
 	// feature extraction
 	::std::vector<int> image_number; // this looks as if it could be done in a more elegant way
 	::cv::Mat training_descriptors(0, m_descriptorExtractor->descriptorSize(), m_descriptorExtractor->descriptorType());
-	featureExtraction(imgs, image_number, training_descriptors);
+	featureExtraction(imgs, image_number, training_descriptors, m_gridFeatures);
 
 	// kmeans cluster to construct the vocabulary
 	::cv::Mat cluster_labels;
-	m_dictionarySize = 50;
+	m_dictionarySize = 250;
 	::cv::kmeans(training_descriptors, m_dictionarySize, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
 	this->initializeKNN();
 
@@ -253,7 +255,7 @@ bool BagOfFeatures::train(const Dataset& dataset)
  *
  * \return true if the BOF classifier was correctly trained
  * */
-bool BagOfFeatures::predict(const ::cv::Mat img, float& response) const
+bool BagOfFeatures::predict(const ::cv::Mat img, float& response) 
 {
 	if (!m_trained) 
 		return false;
@@ -265,7 +267,12 @@ bool BagOfFeatures::predict(const ::cv::Mat img, float& response) const
 	for (int i = 0; i < m_vocabulary.rows; ++i) 
 		v_word_labels.push_back(i);
 
-	m_featureDetector->detect(img, keyPoints);
+	if(!m_gridFeatures)
+		m_featureDetector->detect(img, keyPoints);
+	else
+		this->gridKeypointExtraction(img, keyPoints);
+
+
 	m_descriptorExtractor->compute(img, keyPoints,descriptors);
 	
 	// put descriptors in right format for kmeans clustering
@@ -287,14 +294,18 @@ bool BagOfFeatures::predict(const ::cv::Mat img, float& response) const
 	::cv::transpose(::cv::Mat(temp),response_histogram); // make a row-matrix from the column one made from the vector-
 
 	// Normalization of response histogram
-	::cv::Mat col;
-	for (int i = 0; i < response_histogram.cols; ++i)
-	{
-		col = response_histogram.col(i);
 
-		col = col - m_scaling_means[i];
-		col = col / m_scaling_stds[i];
-	}
+	response_histogram /= ::cv::norm(response_histogram, ::cv::NormTypes::NORM_L2, ::cv::Mat()); 
+
+
+	//::cv::Mat col;
+	//for (int i = 0; i < response_histogram.cols; ++i)
+	//{
+	//	col = response_histogram.col(i);
+
+	//	col = col - m_scaling_means[i];
+	//	col = col / m_scaling_stds[i];
+	//}
 
 	response = 0.0;
 
@@ -374,7 +385,7 @@ void BagOfFeatures::initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructu
  * \param[in,out] image_number - a vector making the correspondence between the descriptors and the input image they belong to
  * \param[in,out] training_descriptors - a cv::Mat with all descriptors from all images stacked vertically
  * */
-void BagOfFeatures::featureExtraction(const ::std::vector<::cv::Mat>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors)
+void BagOfFeatures::featureExtraction(const ::std::vector<::cv::Mat>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors, bool gridFeatures)
 {
 	if (training_descriptors.size > 0)
 		training_descriptors.resize(0);
@@ -385,7 +396,11 @@ void BagOfFeatures::featureExtraction(const ::std::vector<::cv::Mat>& imgs, ::st
 	for(int i = 0; i < imgs.size(); ++i)
 	{
 		// detect keypoints
-		m_featureDetector->detect(imgs[i], keyPoints);
+		if (!gridFeatures)
+			m_featureDetector->detect(imgs[i], keyPoints);
+		else
+			this->gridKeypointExtraction(imgs[i], keyPoints);
+
 
 		// extract descriptors
 		m_descriptorExtractor->compute(imgs[i], keyPoints, descriptors);
@@ -428,21 +443,28 @@ void BagOfFeatures::computeResponseHistogram(const ::std::vector<::cv::Mat>& img
 	// scale the histogram columns
 	::cv::Scalar	mean;
 	::cv::Scalar	stdev;
-	::cv::Mat		col;
+	//::cv::Mat		col;
+	::cv::Mat		row;
 
-	for (int i = 0; i < im_histograms.cols; ++i)
+	for (int i = 0; i < im_histograms.rows; ++i)
 	{
-
-		col = im_histograms.col(i);
-
-		::cv::meanStdDev(col,mean,stdev);
-
-		col = col - mean.val[0];
-		col = col / stdev.val[0];
-
-		m_scaling_means.push_back(mean.val[0]);
-		m_scaling_stds.push_back(stdev.val[0]);
+		row = im_histograms.row(i);
+		row /= ::cv::norm(row, ::cv::NormTypes::NORM_L2, ::cv::Mat()); 
 	}
+
+	//for (int i = 0; i < im_histograms.cols; ++i)
+	//{
+
+	//	col = im_histograms.col(i);
+
+	//	::cv::meanStdDev(col,mean,stdev);
+
+	//	col = col - mean.val[0];
+	//	col = col / stdev.val[0];
+
+	//	m_scaling_means.push_back(mean.val[0]);
+	//	m_scaling_stds.push_back(stdev.val[0]);
+	//}
 }
 
 
@@ -544,4 +566,17 @@ void BagOfFeatures::computeClustersInFeatureSpace(const Dataset& dataset, ::cv::
 	::cv::Mat cluster_labels_training;
 	::cv::TermCriteria tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
 	::cv::kmeans(resp, 3, cluster_labels_training, tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, feature_voc);
+}
+
+
+void 
+BagOfFeatures::gridKeypointExtraction(const ::cv::Mat img, ::std::vector<::cv::KeyPoint>& keypoints, int step)
+{
+	if (keypoints.size() > 0)
+		keypoints.clear();
+
+	for (int y = step; y < img.rows - step; y += step)
+		for (int x = step; x < img.cols - step; x += step)
+			keypoints.push_back(::cv::KeyPoint(float(x), float(y), float(step)));
+
 }

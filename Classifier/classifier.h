@@ -29,7 +29,7 @@ class ImageClassifier
 
 		~ImageClassifier();
 
-        virtual bool predict(const ::std::vector< ::cv::Mat>& imgs, ::std::vector<float>& labels) const;
+        virtual bool predict(const ::std::vector< ::cv::Mat>& imgs, ::std::vector<float>& labels) ;
 
         ::std::vector< ::std::string> getClasses()  const {return m_classes;};
 		
@@ -42,7 +42,7 @@ class ImageClassifier
 
         virtual bool train(const Dataset& dataset) = 0;
 
-		virtual bool predict(const ::cv::Mat img, float& response) const = 0 ;
+		virtual bool predict(const ::cv::Mat img, float& response)  = 0 ;
 		
 };
 
@@ -79,9 +79,11 @@ class BagOfFeatures : public ImageClassifier
 
 		bool m_trained;
 
+		bool m_gridFeatures;
+
 	// interface
 	public:
-		BagOfFeatures();
+		BagOfFeatures(bool gridFeatures = false);
 
 		virtual ~BagOfFeatures();
 
@@ -93,7 +95,7 @@ class BagOfFeatures : public ImageClassifier
 
         virtual bool train(const Dataset& dataset);
 
-        virtual bool predict(const ::cv::Mat img, float& response) const ;
+        virtual bool predict(const ::cv::Mat img, float& response);
 
 		// experimental
 		void	autoLabelImages(const Dataset& dataset);
@@ -109,7 +111,7 @@ class BagOfFeatures : public ImageClassifier
 
         void initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure = ::cv::ml::KNearest::BRUTE_FORCE); // KDTREE is not working. Plus, time difference is very minimal, less than 1 ms ...
 
-        void featureExtraction(const ::std::vector< ::cv::Mat>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors);
+        void featureExtraction(const ::std::vector< ::cv::Mat>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors, bool gridFeatures = false);
 
         void computeResponseHistogram(const ::std::vector< ::cv::Mat>& imgs, const ::cv::Mat& cluster_labels, const ::std::vector<int>& image_number, ::cv::Mat& im_histograms);
 
@@ -118,6 +120,8 @@ class BagOfFeatures : public ImageClassifier
 		void applyClusteringInFeatureSpace(const Dataset& dataset, const ::cv::Mat& feature_voc, ::cv::Mat& resp, ::std::vector<int>& labels);
 
 		void saveImages(const Dataset& dataset, const ::std::vector<int>& labels);
+
+		void gridKeypointExtraction(const ::cv::Mat imgs, ::std::vector<::cv::KeyPoint>& keypoints, int step = 10);
 };
 
 

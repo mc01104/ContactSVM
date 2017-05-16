@@ -36,8 +36,10 @@ int find_opencv_version();
  *
  * Outputs only true for now, should be enhanced to handle errors and exceptions ...
  * */
-bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay, bool saveOutput)
+bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay, bool saveOutput, bool writeVideo)
 {
+	//if (writeVideo)
+	::cv::VideoWriter video("classifier_SURF.avi", CV_FOURCC('M','P','E','G'), 10, ::cv::Size(250, 250), true);
 
     // Variables declaration and initialization
     ::std::vector< ::std::string> imList;
@@ -106,26 +108,26 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
             std::chrono::microseconds ms = std::chrono::duration_cast<std::chrono::microseconds> (t2-t1);
             timings.push_back(ms.count());
 
-            if (classes[(int) response] == "Tissue")
+            //if (classes[(int) response] == "Chordae")
+            //{
+            //    response = 0.0;
+            //    response_tissue++;
+            //}
+            /*if (classes[(int) response] == "Free")
             {
                 response = 0.0;
-                response_tissue++;
-            }
-            else if (classes[(int) response] == "Free")
-            {
-                response = 1.0;
                 response_free++;
             }
-			else if (classes[(int) response] == "Chordae")
+			else if (classes[(int) response] == "Tissue")
 			{
-				response = 2.0;
+				response = 0.0;
 				response_chordae++;
 			}
 			else if (classes[(int) response] == "Valve")
 			{
-				response = 3.0;
+				response = 1.0;
 				response_contact++;
-			}
+			}*/
 
             if(visualization)
             {
@@ -137,6 +139,8 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
 
                 if (key == 27) break;
             }
+			if (true)
+				video.write(img);
         }
         else ::std::cout << "Error in BOW prediction" << ::std::endl;
 
@@ -170,6 +174,8 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
     std::cout << "min is " << *result.first / 1000.0  << ::std::endl;
     std::cout << "max is " << *result.second / 1000.0 << ::std::endl;
 
+	if (true)
+		video.release();
     return true;
 }
 
@@ -203,7 +209,7 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
     ::std::vector< float> numData;
 
 	bool labelFlag = false;
-
+	bool gridFlag = false;
     bool pathOK = true;
 
     if (op.getData(std::string("train_path"),folder))
@@ -251,6 +257,10 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
         labelFlag = numData[0];
     }
 
+    if (op.getData(std::string("grid"),numData))
+    {
+        gridFlag = numData[0];
+    }
 
     BagOfFeatures bow; 
 
@@ -279,7 +289,8 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
             return false; // TODO: raise exception ???
     }
 
-    testBOW_hierarchical(test_path,bow, visualize);
+    //testBOW_hierarchical(test_path,bow, visualize);
+	testBOW(test_path,bow, visualize);
     cv::waitKey(0);
 
     return true;
@@ -367,6 +378,8 @@ void createDataset(const ::std::string& path, ::std::vector< ::cv::Mat>& images,
 bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualization, int delay, bool saveOutput)
 {
 
+	::cv::VideoWriter video("detection_03.avi", CV_FOURCC('M','P','E','G'), 10, ::cv::Size(250, 250), true);
+
     // Variables declaration and initialization
     ::std::vector< ::std::string> imList;
     int count = 0;
@@ -428,7 +441,7 @@ bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualizati
 
         t1 = ::std::chrono::steady_clock::now();
 
-        cv::Size blockSize(img.rows/3,img.cols/3);
+        cv::Size blockSize(img.rows/2,img.cols/2);
 
         for (int y = 0; y < img.rows; y += blockSize.height)
         {
@@ -444,10 +457,35 @@ bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualizati
 
                 if (bow.predict(test,response))
                 {
-                    if (classes[(int) response] == "Contact")
-                    {
-                        cv::rectangle(img,rect, cv::Scalar(0,255,0));
-                    }
+                    //if (classes[(int) response] == "Contact")
+                    //{
+                    //    cv::rectangle(img,rect, cv::Scalar(0,255,0));
+                    //}    
+					if (classes[(int) response] == "Free")
+					{
+						response = 0.0;
+						//::cv::rectangle(img,rect, cv::Scalar(0,255,0));
+						//::cv::putText(img,cv::String(classes[(int) response]),cv::Point(rect.x + 0.2 * rect.width,rect.y + 0.5 * rect.height),cv::FONT_HERSHEY_COMPLEX,0.5,cv::Scalar(0,255,0));
+					}
+					else if (classes[(int) response] == "Tissue")
+					{
+						response = 1.0;
+						::cv::rectangle(img,rect, cv::Scalar(0,255,0));
+						::cv::putText(img,cv::String(classes[(int) response]),cv::Point(rect.x + 0.2 * rect.width,rect.y + 0.5 * rect.height),cv::FONT_HERSHEY_COMPLEX,0.5,cv::Scalar(0,255,0));
+					}
+					else if (classes[(int) response] == "Valve")
+					{
+						response = 2.0;
+						::cv::rectangle(img,rect, cv::Scalar(0,255,255));
+						::cv::putText(img,cv::String(classes[(int) response]),cv::Point(rect.x + 0.2 * rect.width,rect.y + 0.5 * rect.height),cv::FONT_HERSHEY_COMPLEX,0.5,cv::Scalar(0,255,255));
+					}
+					//else if (classes[(int) response] == "Valve")
+					//{
+					//	response = 3.0;
+					//	::cv::rectangle(img,rect, cv::Scalar(255,255,0));
+					//	::cv::putText(img,cv::String(classes[(int) response]),cv::Point(rect.x + 0.2 * rect.width,rect.y + 0.5 * rect.height),cv::FONT_HERSHEY_COMPLEX,0.5,cv::Scalar(255,255,0));
+					//}
+
 
                 }
 
@@ -460,7 +498,7 @@ bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualizati
             std::chrono::microseconds ms = std::chrono::duration_cast<std::chrono::microseconds> (t2-t1);
             timings.push_back(ms.count());
 
-            if (classes[(int) response] == "Tissue")
+            if (classes[(int) response] == "Chordae")
             {
                 response = 0.0;
                 response_tissue++;
@@ -470,7 +508,7 @@ bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualizati
                 response = 1.0;
                 response_free++;
             }
-            else if (classes[(int) response] == "Chordae")
+            else if (classes[(int) response] == "Tissue")
             {
                 response = 2.0;
                 response_chordae++;
@@ -480,17 +518,31 @@ bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualizati
                 response = 3.0;
                 response_contact++;
             }
+            //if (classes[(int) response] == "Free")
+            //{
+            //    response = 0.0;
+            //    response_free++;
+            //}
+            //else if (classes[(int) response] == "Contact")
+            //{
+            //    response = 1.0;
+            //    response_contact++;
+            //}
+
 
             if(visualization)
             {
 
                 //::cv::putText(img,cv::String(::std::to_string(response).c_str()),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
-                ::cv::putText(img,cv::String(classes[(int) response]),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
+                //::cv::putText(img,cv::String(classes[(int) response]),cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(0,255,0));
                 ::cv::imshow("Image", img);
                 char key = ::cv::waitKey(delay);
 
                 if (key == 27) break;
             }
+			if (true)
+				video.write(img);
+
         }
         else ::std::cout << "Error in BOW prediction" << ::std::endl;
 
@@ -512,7 +564,7 @@ bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualizati
     std::cout << "Number of images: " << timings.size() << ::std::endl;
     std::cout << "Percent of Valve: " << response_contact*1.0/timings.size() << ::std::endl;
     std::cout << "Percent of Free: " << response_free*1.0/timings.size() << ::std::endl;
-    std::cout << "Percent of Tissue: " << response_tissue*1.0/timings.size() << ::std::endl;
+    //std::cout << "Percent of Tissue: " << response_tissue*1.0/timings.size() << ::std::endl;
 
     double sum = std::accumulate(timings.begin(), timings.end(), 0.0);
     double mean = sum/1000.0 / timings.size();
@@ -524,6 +576,8 @@ bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualizati
     std::cout << "min is " << *result.first / 1000.0  << ::std::endl;
     std::cout << "max is " << *result.second / 1000.0 << ::std::endl;
 
+	if (true)
+		video.release();
     return true;
 }
 
@@ -615,7 +669,7 @@ void classifierTestGeorge()
 }
 
 
-void processImagesWithClassifier(const ::std::string& images_path, const BagOfFeatures& bow)
+void processImagesWithClassifier(const ::std::string& images_path, BagOfFeatures& bow)
 {
 
     ::std::vector< ::std::string> imgPaths;
@@ -670,7 +724,7 @@ void processImagesWithClassifier(const ::std::string& images_path, const BagOfFe
 }
 
 
-void processVideoWithClassifier(const ::std::string& video_path, const ::std::string& video_filename, const BagOfFeatures& bow)
+void processVideoWithClassifier(const ::std::string& video_path, const ::std::string& video_filename, BagOfFeatures& bow)
 {
 	::cv::VideoCapture v(video_path + video_filename);
 	double num_of_frames = v.get(CV_CAP_PROP_FRAME_COUNT); 

@@ -9,7 +9,7 @@
 #include "dataset.h"
 
 
-bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 140, bool saveOutput = false);
+bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 40, bool saveOutput = false, bool writeVideo = false);
 
 bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 30, bool saveOutput = false);
 
@@ -23,6 +23,6 @@ bool trainClassifier(const ::std::string& train_path, BagOfFeatures& bow);
 
 
 void classifierTestGeorge();
-void processVideoWithClassifier(const ::std::string& video_path, const ::std::string& video_filename, const BagOfFeatures& bow);
-void processImagesWithClassifier(const ::std::string& images_path, const BagOfFeatures& bow);
+void processVideoWithClassifier(const ::std::string& video_path, const ::std::string& video_filename, BagOfFeatures& bow);
+void processImagesWithClassifier(const ::std::string& images_path, BagOfFeatures& bow);
 
