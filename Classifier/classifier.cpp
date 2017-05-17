@@ -45,7 +45,7 @@ BagOfFeatures::BagOfFeatures(bool gridFeatures):
 	m_gridFeatures(gridFeatures)
 {
 	m_featureDetector =  cv::FastFeatureDetector::create();
-	m_descriptorExtractor = cv::xfeatures2d::LUCID::create(3,1);
+    m_descriptorExtractor = cv::xfeatures2d::LUCID::create(7,1);
 	//m_descriptorExtractor = cv::xfeatures2d::SURF::create();
 
 	m_tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
@@ -195,20 +195,34 @@ bool BagOfFeatures::save(const ::std::string& path_to_classifier_files)
 bool BagOfFeatures::train(const ::std::vector<::cv::Mat>& imgs, const ::std::vector<int>& labels)
 {
 	
+    ::std::cout << "Extracting features ...." << ::std::endl;
+
 	// feature extraction
 	::std::vector<int> image_number; // this looks as if it could be done in a more elegant way
 	::cv::Mat training_descriptors(0, m_descriptorExtractor->descriptorSize(), m_descriptorExtractor->descriptorType());
 	featureExtraction(imgs, image_number, training_descriptors, m_gridFeatures);
 
+    ::std::cout << "Extracted " << training_descriptors.rows << " features" << ::std::endl;
+
+    ::std::cout << "Vocabulary construction ...." << ::std::endl;
+
 	// kmeans cluster to construct the vocabulary
 	::cv::Mat cluster_labels;
-	m_dictionarySize = 250;
+    m_dictionarySize = 100;
 	::cv::kmeans(training_descriptors, m_dictionarySize, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
+
+    ::std::cout << "KNN initialization ...." << ::std::endl;
+
 	this->initializeKNN();
+
+
+    ::std::cout << "Computing response histogram ...." << ::std::endl;
 
 	// compute response histograms for all training images
 	::cv::Mat im_histograms = ::cv::Mat::zeros(imgs.size(), m_dictionarySize, CV_32FC1);
 	computeResponseHistogram(imgs, cluster_labels, image_number, im_histograms);
+
+    ::std::cout << "Training SVM" << ::std::endl;
 
 	// train SVM classifier
 	m_svm = ::cv::ml::SVM::create();
@@ -218,6 +232,10 @@ bool BagOfFeatures::train(const ::std::vector<::cv::Mat>& imgs, const ::std::vec
 	//::std::vector<int> labelsInt(labels.size());
 	//::std::copy(labels.begin(), labels.end(), labelsInt.begin());
 	m_trained = (m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE, labels) ? true : false); 
+
+
+    ::std::cout << "BoF trained" << ::std::endl;
+
 
 	return m_trained;
 

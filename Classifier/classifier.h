@@ -121,7 +121,7 @@ class BagOfFeatures : public ImageClassifier
 
 		void saveImages(const Dataset& dataset, const ::std::vector<int>& labels);
 
-        void gridKeypointExtraction(const ::cv::Mat imgs, ::std::vector<::cv::KeyPoint>& keypoints, int step = 8);
+        void gridKeypointExtraction(const ::cv::Mat imgs, ::std::vector<::cv::KeyPoint>& keypoints, int step = 24);
 };
 
 

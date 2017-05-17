@@ -70,6 +70,7 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
         if (path.find(ext)!=std::string::npos)
         {
             isVideo = true;
+            count = 100000; // dummy large number for the upcoming while loop
             cap.open(path);
         }
     }
@@ -262,7 +263,7 @@ bool processFromFile(::std::string csvFilePath, bool trainSVM, bool visualize)
         gridFlag = numData[0];
     }
 
-    BagOfFeatures bow; 
+    BagOfFeatures bow(true);
 
     if (trainSVM)
     {
