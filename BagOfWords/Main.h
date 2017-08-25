@@ -9,7 +9,7 @@
 #include "dataset.h"
 
 
-bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 40, bool saveOutput = false, bool writeVideo = false);
+bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 20, bool saveOutput = false, bool writeVideo = false);
 
 bool testBOW_hierarchical(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 30, bool saveOutput = false);
 

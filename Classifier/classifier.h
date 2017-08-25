@@ -8,6 +8,7 @@
 
 // opencv
 #include <opencv2/opencv.hpp>
+#include <opencv2/flann/flann.hpp>
 
 // dataset class
 #include "dataset.h"
@@ -81,6 +82,10 @@ class BagOfFeatures : public ImageClassifier
 
 		bool m_gridFeatures;
 
+        bool m_flannKNN;
+
+        ::cv::flann::Index m_flann_index;
+
 	// interface
 	public:
 		BagOfFeatures(bool gridFeatures = false);
@@ -109,7 +114,10 @@ class BagOfFeatures : public ImageClassifier
 	// implementation
 	protected:
 
-        void initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure = ::cv::ml::KNearest::BRUTE_FORCE); // KDTREE is not working. Plus, time difference is very minimal, less than 1 ms ...
+        void initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure = ::cv::ml::KNearest::BRUTE_FORCE, bool flann=false); // KDTREE is not working. Plus, time difference is very minimal, less than 1 ms ...
+
+        void initializeKNN_flann();
+
 
         void featureExtraction(const ::std::vector< ::cv::Mat>& imgs, ::std::vector<int>& image_number, ::cv::Mat& training_descriptors, bool gridFeatures = false);
 
@@ -121,7 +129,7 @@ class BagOfFeatures : public ImageClassifier
 
 		void saveImages(const Dataset& dataset, const ::std::vector<int>& labels);
 
-        void gridKeypointExtraction(const ::cv::Mat imgs, ::std::vector<::cv::KeyPoint>& keypoints, int step = 24);
+        void gridKeypointExtraction(const ::cv::Mat imgs, ::std::vector<::cv::KeyPoint>& keypoints, int step = 12);
 };
 
 

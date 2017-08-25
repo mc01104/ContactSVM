@@ -140,7 +140,7 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
 
                 if (key == 27) break;
             }
-			if (true)
+            if (writeVideo)
 				video.write(img);
         }
         else ::std::cout << "Error in BOW prediction" << ::std::endl;
@@ -175,7 +175,7 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
     std::cout << "min is " << *result.first / 1000.0  << ::std::endl;
     std::cout << "max is " << *result.second / 1000.0 << ::std::endl;
 
-	if (true)
+    if (writeVideo)
 		video.release();
     return true;
 }

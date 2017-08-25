@@ -42,11 +42,12 @@ BagOfFeatures::BagOfFeatures(bool gridFeatures):
 	ImageClassifier(),
 	m_dictionarySize(0),
 	m_trained(false),
+    m_flannKNN(true),
 	m_gridFeatures(gridFeatures)
 {
 	m_featureDetector =  cv::FastFeatureDetector::create();
-    m_descriptorExtractor = cv::xfeatures2d::LUCID::create(7,1);
-	//m_descriptorExtractor = cv::xfeatures2d::SURF::create();
+    m_descriptorExtractor = cv::xfeatures2d::LUCID::create(5,1);
+    //m_descriptorExtractor = cv::xfeatures2d::SURF::create(10,2,2,false,true);
 
 	m_tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
 
@@ -85,6 +86,9 @@ bool BagOfFeatures::load(const ::std::string& path_to_classifier_files)
 		// Load KNN if there is a file or train a new one otherwise
 		if (file_exists(path_to_classifier_files + "KNN.xml"))
 		{
+            if (m_flannKNN)
+                m_flann_index.load(m_vocabulary,path_to_classifier_files + "KNN.xml");
+
 			::cv::FileStorage readKNN(path_to_classifier_files +"KNN.xml", ::cv::FileStorage::READ);
 			m_knn = ::cv::Algorithm::read<::cv::ml::KNearest>(readKNN.root());
 
@@ -97,7 +101,7 @@ bool BagOfFeatures::load(const ::std::string& path_to_classifier_files)
 		}
 
 		// initialize k-nearest neighbors
-		this->initializeKNN();
+        this->initializeKNN(::cv::ml::KNearest::BRUTE_FORCE, m_flannKNN);
 		
 		// Load SVM parameters
 		m_svm = ::cv::ml::StatModel::load<::cv::ml::SVM>(path_to_classifier_files + "SVM.xml");
@@ -150,7 +154,10 @@ bool BagOfFeatures::save(const ::std::string& path_to_classifier_files)
 {
 	try
 	{
-		m_knn->save(path_to_classifier_files + "KNN.xml");
+        if (!m_flannKNN)
+            m_knn->save(path_to_classifier_files + "KNN.xml");
+        else
+            m_flann_index.save(path_to_classifier_files + "KNN.xml");
 		
 		m_svm->save(path_to_classifier_files + "SVM.xml");
 
@@ -208,12 +215,34 @@ bool BagOfFeatures::train(const ::std::vector<::cv::Mat>& imgs, const ::std::vec
 
 	// kmeans cluster to construct the vocabulary
 	::cv::Mat cluster_labels;
-    m_dictionarySize = 100;
-	::cv::kmeans(training_descriptors, m_dictionarySize, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
+    m_dictionarySize = 500;
+
+    m_flannKNN = false;
+
+    if (m_flannKNN)
+    {
+        ::cv::Mat voc_temp = cv::Mat::zeros(m_dictionarySize, training_descriptors.cols, CV_32F);
+
+        ::cvflann::KMeansIndexParams kmean_params(32, 10, ::cvflann::FLANN_CENTERS_KMEANSPP);
+        m_dictionarySize = ::cv::flann::hierarchicalClustering< ::cv::flann::L2<float> >(training_descriptors,voc_temp,kmean_params);
+        ::std::cout << m_dictionarySize << ::std::endl;
+
+        voc_temp(::cv::Range(0,m_dictionarySize), ::cv::Range(0, voc_temp.cols)).copyTo(m_vocabulary);
+
+    }
+    else
+        ::cv::kmeans(training_descriptors, m_dictionarySize, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
 
     ::std::cout << "KNN initialization ...." << ::std::endl;
 
-	this->initializeKNN();
+    this->initializeKNN(::cv::ml::KNearest::BRUTE_FORCE, m_flannKNN);
+
+    if (m_flannKNN)
+    {
+        ::cv::Mat dists;
+        m_flann_index.knnSearch(training_descriptors,cluster_labels,dists,1);
+    }
+    m_flannKNN = true;
 
 
     ::std::cout << "Computing response histogram ...." << ::std::endl;
@@ -299,7 +328,14 @@ bool BagOfFeatures::predict(const ::cv::Mat img, float& response)
 
 	// Vector quantization of words in image
 	::cv::Mat wordsInImg;
-	m_knn->findNearest(descriptors,1,wordsInImg);  // less than 1 ms here
+
+    if (m_flannKNN)
+    {
+        ::cv::Mat dists;
+        m_flann_index.knnSearch(descriptors,wordsInImg,dists,1);
+    }
+    else
+        m_knn->findNearest(descriptors,1,wordsInImg);
 	
 	// construction of response histogram
 	::std::vector<float> temp(m_vocabulary.rows, 0.0);
@@ -313,17 +349,17 @@ bool BagOfFeatures::predict(const ::cv::Mat img, float& response)
 
 	// Normalization of response histogram
 
-	response_histogram /= ::cv::norm(response_histogram, ::cv::NormTypes::NORM_L2, ::cv::Mat()); 
+//	response_histogram /= ::cv::norm(response_histogram, ::cv::NormTypes::NORM_L2, ::cv::Mat());
 
 
-	//::cv::Mat col;
-	//for (int i = 0; i < response_histogram.cols; ++i)
-	//{
-	//	col = response_histogram.col(i);
+    ::cv::Mat col;
+    for (int i = 0; i < response_histogram.cols; ++i)
+    {
+        col = response_histogram.col(i);
 
-	//	col = col - m_scaling_means[i];
-	//	col = col / m_scaling_stds[i];
-	//}
+        col = col - m_scaling_means[i];
+        col = col / m_scaling_stds[i];
+    }
 
 	response = 0.0;
 
@@ -376,22 +412,49 @@ void BagOfFeatures::setClasses(::std::vector< ::std::string> classes)
  * \param[in] KNNSearchDataStructure - the type of KNN. 1 is BruteForce and 2 is KDTree. KDTree implementation is currently broken
  *
  * */
-void BagOfFeatures::initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure)
+void BagOfFeatures::initializeKNN(::cv::ml::KNearest::Types KNNSearchDataStructure, bool flann)
 {
-	m_knn = ::cv::ml::KNearest::create();
-    m_knn->setAlgorithmType(KNNSearchDataStructure);
 
-	::cv::Mat mat_words_labels(m_vocabulary.rows, 1, CV_32S);
+    if (flann)
+        initializeKNN_flann();
 
-	for (int i=0;i<m_vocabulary.rows;i++) 
-		mat_words_labels.at<int>(i) = i;
+    else
+    {
 
-	m_knn->clear();
-	m_knn->setDefaultK(1);
+        m_knn = ::cv::ml::KNearest::create();
+        m_knn->setAlgorithmType(KNNSearchDataStructure);
 
-	m_knn->train(m_vocabulary, ::cv::ml::ROW_SAMPLE, mat_words_labels);
+        ::cv::Mat mat_words_labels(m_vocabulary.rows, 1, CV_32S);
 
+        for (int i=0;i<m_vocabulary.rows;i++)
+            mat_words_labels.at<int>(i) = i;
+
+        m_knn->clear();
+        m_knn->setDefaultK(1);
+        m_knn->train(m_vocabulary, ::cv::ml::ROW_SAMPLE, mat_words_labels);
+    }
 }
+
+
+
+
+/**
+ * @brief: Initialize the K-Nearest-Neighbor using the FLANN implementation
+ *
+ * @author: Ben & George
+ *
+ *
+ * */
+void BagOfFeatures::initializeKNN_flann()
+{
+    ::cv::flann::AutotunedIndexParams flann_params(0.7,0.3,0,0.5);
+    //m_flann_index = ::cv::flann::Index(m_vocabulary, flann_params);
+    m_flann_index.build(m_vocabulary,flann_params);//,::cvflann::FLANN_DIST_HAMMING);
+}
+
+
+
+
 
 
 /**
@@ -461,28 +524,28 @@ void BagOfFeatures::computeResponseHistogram(const ::std::vector<::cv::Mat>& img
 	// scale the histogram columns
 	::cv::Scalar	mean;
 	::cv::Scalar	stdev;
-	//::cv::Mat		col;
+    ::cv::Mat		col;
 	::cv::Mat		row;
 
-	for (int i = 0; i < im_histograms.rows; ++i)
-	{
-		row = im_histograms.row(i);
-		row /= ::cv::norm(row, ::cv::NormTypes::NORM_L2, ::cv::Mat()); 
-	}
+//	for (int i = 0; i < im_histograms.rows; ++i)
+//	{
+//		row = im_histograms.row(i);
+//		row /= ::cv::norm(row, ::cv::NormTypes::NORM_L2, ::cv::Mat());
+//	}
 
-	//for (int i = 0; i < im_histograms.cols; ++i)
-	//{
+    for (int i = 0; i < im_histograms.cols; ++i)
+    {
 
-	//	col = im_histograms.col(i);
+        col = im_histograms.col(i);
 
-	//	::cv::meanStdDev(col,mean,stdev);
+        ::cv::meanStdDev(col,mean,stdev);
 
-	//	col = col - mean.val[0];
-	//	col = col / stdev.val[0];
+        col = col - mean.val[0];
+        col = col / stdev.val[0];
 
-	//	m_scaling_means.push_back(mean.val[0]);
-	//	m_scaling_stds.push_back(stdev.val[0]);
-	//}
+        m_scaling_means.push_back(mean.val[0]);
+        m_scaling_stds.push_back(stdev.val[0]);
+    }
 }
 
 
