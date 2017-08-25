@@ -106,26 +106,26 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
             std::chrono::microseconds ms = std::chrono::duration_cast<std::chrono::microseconds> (t2-t1);
             timings.push_back(ms.count());
 
-            if (classes[(int) response] == "Tissue")
-            {
-                response = 0.0;
-                response_tissue++;
-            }
-            else if (classes[(int) response] == "Free")
-            {
-                response = 1.0;
-                response_free++;
-            }
-			else if (classes[(int) response] == "Chordae")
-			{
-				response = 2.0;
-				response_chordae++;
-			}
-			else if (classes[(int) response] == "Valve")
-			{
-				response = 3.0;
-				response_contact++;
-			}
+//            if (classes[(int) response] == "Tissue")
+//            {
+//                response = 0.0;
+//                response_tissue++;
+//            }
+//            else if (classes[(int) response] == "Free")
+//            {
+//                response = 1.0;
+//                response_free++;
+//            }
+//			else if (classes[(int) response] == "Chordae")
+//			{
+//				response = 2.0;
+//				response_chordae++;
+//			}
+//			else if (classes[(int) response] == "Valve")
+//			{
+//				response = 3.0;
+//				response_contact++;
+//			}
 
             if(visualization)
             {
