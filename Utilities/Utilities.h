@@ -193,3 +193,11 @@ vector<T> linspace(T a, T b, size_t N) {
     *x = val;
   return xs;
 }
+
+void nearestPointToLine(const ::Eigen::VectorXd& point, const ::Eigen::VectorXd& point_on_line, const ::Eigen::VectorXd& line_tangent, ::Eigen::VectorXd& closest_point);
+
+void cartesian2DPointToPolar(const ::Eigen::Vector2d& point_cart, double& radius, double& angle);
+
+double angularDistanceMinusPItoPI(const double angle1, const double angle2);
+
+void computePerpendicularVector(const ::Eigen::Vector2d& in_vector, ::Eigen::Vector2d& out_vector);

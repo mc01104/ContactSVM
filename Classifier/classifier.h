@@ -78,6 +78,7 @@ class BagOfFeatures : public ImageClassifier
 		int m_dictionarySize;
 
 		bool m_trained;
+		
 
 	// interface
 	public:

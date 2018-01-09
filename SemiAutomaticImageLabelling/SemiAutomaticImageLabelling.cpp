@@ -10,7 +10,7 @@ ImageLabelWorker::ImageLabelWorker():
 {
 }
 
-ImageLabelWorker::ImageLabelWorker(const ::std::string& path_to_images)
+ImageLabelWorker::ImageLabelWorker(const ::std::string& path_to_images, const ::std::string& path_to_classifier)
 {
 	data.initDataset(path_to_images);
 }
@@ -42,6 +42,8 @@ void ImageLabelWorker::labelClusters()
 
 void ImageLabelWorker::run()
 {
+	this->extractFeaturesFromImages();
+
 	this->clusterImages();
 
 	this->labelClusters();
@@ -51,7 +53,7 @@ void ImageLabelWorker::run()
 
 void ImageLabelWorker::loadImages(const ::std::string& path_to_images)
 {
-	if (this->data.isInit)
+	if (this->data.isInit())
 		this->data.clear();
 
 	this->data.initDataset(path_to_images);
@@ -74,13 +76,4 @@ void ImageLabelWorker::_extractFeatures(::cv::Mat img, ::std::vector<int> respon
 	// extract descriptors
 	descriptorExtractor->compute(img, keyPoints, descriptors);
 
-	//training_descriptors.push_back(descriptors);
-
-	//	for (int j = 0; j< descriptors.rows; j++)
-	//		image_number.push_back(i);
-	//}
-
-	//// put descriptors in right format for kmeans clustering
-	//if(training_descriptors.type()!=CV_32F) 
-	//	training_descriptors.convertTo(training_descriptors, CV_32F); 
 }

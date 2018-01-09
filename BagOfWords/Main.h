@@ -7,9 +7,10 @@
 
 #include "classifier.h"
 #include "dataset.h"
+#include "LineDetection.h"
 
-
-bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 140, bool saveOutput = false);
+bool testBOW(std::string path, BagOfFeatures& bow, bool visualization = false, int delay = 50, bool saveOutput = false);
+bool testLineDetection(std::string path, LineDetector& lDetector, bool visualization = false, int delay = 140, bool saveOutput = false);
 
 bool processFromFile(::std::string csvFilePath, bool trainSVM = true, bool visualize = false);
 
@@ -23,3 +24,4 @@ void classifierTestGeorge();
 void processVideoWithClassifier(const ::std::string& video_path, const ::std::string& video_filename, const BagOfFeatures& bow);
 void processImagesWithClassifier(const ::std::string& images_path, const BagOfFeatures& bow);
 
+bool processFromFileLineDetection(::std::string csvFilePath, bool visualize = false);

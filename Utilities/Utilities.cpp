@@ -204,3 +204,45 @@ bool file_exists(const ::std::string& filename)
     std::ifstream infile(filename.c_str());
     return infile.good();
 }
+
+void nearestPointToLine(const ::Eigen::VectorXd& point, const ::Eigen::VectorXd& point_on_line, const ::Eigen::VectorXd& line_tangent, ::Eigen::VectorXd& closest_point)
+{
+	double lambda = (point - point_on_line).transpose() * line_tangent;
+	closest_point = point_on_line + lambda * line_tangent;
+}
+
+void cartesian2DPointToPolar(const ::Eigen::Vector2d& point_cart, double& radius, double& angle)
+{
+	angle = ::std::atan2(point_cart(1), point_cart(0));
+	radius = point_cart.norm();
+}
+
+double angularDistanceMinusPItoPI(const double angle1, const double angle2)
+{
+	return ::std::atan2(::std::sin(angle1 - angle2), ::std::cos(angle1 - angle2));	
+}
+
+void computePerpendicularVector(const ::Eigen::Vector2d& in_vector, ::Eigen::Vector2d& out_vector)
+{
+	::Eigen::Vector2d tmp(in_vector);
+	tmp.normalize();
+
+	double radius, angle;
+	cartesian2DPointToPolar(tmp, radius, angle);
+
+	if (::std::sin(angle) == 0)
+	{
+		out_vector(0) = 0;
+		out_vector(1) = 1;
+	}
+	else
+	{
+		out_vector(0) = 1;
+		out_vector(1) = -::std::cos(angle)/::std::sin(angle);
+		out_vector.normalize();
+	}
+
+	//::std::cout << in_vector.dot(out_vector) << ::std::endl;
+
+
+}

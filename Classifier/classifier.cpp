@@ -44,7 +44,8 @@ BagOfFeatures::BagOfFeatures():
 	m_trained(false)
 {
 	m_featureDetector =  cv::FastFeatureDetector::create();
-	m_descriptorExtractor = cv::xfeatures2d::LUCID::create(2,1);
+	//m_descriptorExtractor = cv::xfeatures2d::SURF::create(100);
+	m_descriptorExtractor = cv::xfeatures2d::LUCID::create(5,2);
 
 	m_tc_Kmeans = ::cv::TermCriteria(::cv::TermCriteria::MAX_ITER + ::cv::TermCriteria::EPS,100000, 0.000001);
 
@@ -200,7 +201,7 @@ bool BagOfFeatures::train(const ::std::vector<::cv::Mat>& imgs, const ::std::vec
 
 	// kmeans cluster to construct the vocabulary
 	::cv::Mat cluster_labels;
-	m_dictionarySize = 50;
+	m_dictionarySize = 500;
 	::cv::kmeans(training_descriptors, m_dictionarySize, cluster_labels, m_tc_Kmeans, 3, cv::KMEANS_PP_CENTERS, m_vocabulary );
 	this->initializeKNN();
 
@@ -210,13 +211,15 @@ bool BagOfFeatures::train(const ::std::vector<::cv::Mat>& imgs, const ::std::vec
 
 	// train SVM classifier
 	m_svm = ::cv::ml::SVM::create();
-	m_svm->setGamma(0.02);
+	m_svm->setGamma(0.1);
+	m_svm->setC(10.0);
 
 	/*::cv::Mat labelsCV(labels, CV_32FC1);*/
 	//::std::vector<int> labelsInt(labels.size());
 	//::std::copy(labels.begin(), labels.end(), labelsInt.begin());
-	m_trained = (m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE, labels) ? true : false); 
-
+	//m_trained = (m_svm->train(im_histograms, ::cv::ml::ROW_SAMPLE, labels) ? true : false); 
+	::cv::Ptr<::cv::ml::TrainData> data = ::cv::ml::TrainData::create(im_histograms, ::cv::ml::ROW_SAMPLE, labels);
+	m_trained = m_svm->trainAuto(data);
 	return m_trained;
 
 }

@@ -21,6 +21,9 @@
 #include "helper_parseopts.h"
 #include "CSV_reader.h"
 
+#include "LineDetection.h"
+#include "FilterLibrary.h"
+
 int find_opencv_version();
 
 /**
@@ -102,30 +105,30 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
 
         if (bow.predict(img,response))
         {
-            t2 = ::std::chrono::steady_clock::now();
-            std::chrono::microseconds ms = std::chrono::duration_cast<std::chrono::microseconds> (t2-t1);
-            timings.push_back(ms.count());
+   //         t2 = ::std::chrono::steady_clock::now();
+   //         std::chrono::microseconds ms = std::chrono::duration_cast<std::chrono::microseconds> (t2-t1);
+   //         timings.push_back(ms.count());
 
-            if (classes[(int) response] == "Tissue")
-            {
-                response = 0.0;
-                response_tissue++;
-            }
-            else if (classes[(int) response] == "Free")
-            {
-                response = 1.0;
-                response_free++;
-            }
-			else if (classes[(int) response] == "Chordae")
-			{
-				response = 2.0;
-				response_chordae++;
-			}
-			else if (classes[(int) response] == "Valve")
-			{
-				response = 3.0;
-				response_contact++;
-			}
+   //         if (classes[(int) response] == "Tissue")
+   //         {
+   //             response = 0.0;
+   //             response_tissue++;
+   //         }
+   //         else if (classes[(int) response] == "Free")
+   //         {
+   //             response = 1.0;
+   //             response_free++;
+   //         }
+			//else if (classes[(int) response] == "Chordae")
+			//{
+			//	response = 2.0;
+			//	response_chordae++;
+			//}
+			//else if (classes[(int) response] == "Valve")
+			//{
+			//	response = 3.0;
+			//	response_contact++;
+			//}
 
             if(visualization)
             {
@@ -153,22 +156,22 @@ bool testBOW(std::string path, BagOfFeatures& bow, bool visualization, int delay
         fs.release();
     }
 
-    // not necessarily all images are processed, so imList.size() is not appropriate
-    // timings has a number of elements equal to the number of processed images
-    std::cout << "Number of images: " << timings.size() << ::std::endl;
-    std::cout << "Percent of Valve: " << response_contact*1.0/timings.size() << ::std::endl;
-    std::cout << "Percent of Free: " << response_free*1.0/timings.size() << ::std::endl;
-	std::cout << "Percent of Tissue: " << response_tissue*1.0/timings.size() << ::std::endl;
+ //   // not necessarily all images are processed, so imList.size() is not appropriate
+ //   // timings has a number of elements equal to the number of processed images
+ //   std::cout << "Number of images: " << timings.size() << ::std::endl;
+ //   std::cout << "Percent of Valve: " << response_contact*1.0/timings.size() << ::std::endl;
+ //   std::cout << "Percent of Free: " << response_free*1.0/timings.size() << ::std::endl;
+	//std::cout << "Percent of Tissue: " << response_tissue*1.0/timings.size() << ::std::endl;
 
-    double sum = std::accumulate(timings.begin(), timings.end(), 0.0);
-    double mean = sum/1000.0 / timings.size();
+ //   double sum = std::accumulate(timings.begin(), timings.end(), 0.0);
+ //   double mean = sum/1000.0 / timings.size();
 
-    auto result = std::minmax_element(timings.begin(), timings.end());
+ //   auto result = std::minmax_element(timings.begin(), timings.end());
 
-    std::cout << "Average prediction time (ms): " << mean << ::std::endl;
+ //   std::cout << "Average prediction time (ms): " << mean << ::std::endl;
 
-    std::cout << "min is " << *result.first / 1000.0  << ::std::endl;
-    std::cout << "max is " << *result.second / 1000.0 << ::std::endl;
+ //   std::cout << "min is " << *result.first / 1000.0  << ::std::endl;
+ //   std::cout << "max is " << *result.second / 1000.0 << ::std::endl;
 
     return true;
 }
@@ -532,10 +535,10 @@ void processVideoWithClassifier(const ::std::string& video_path, const ::std::st
 int main( int argc, char** argv )
 {
 
-    //::std::string csvFilePath = "./folders_contactdetection.csv";
 	::std::string csvFilePath = "./folders_contactdetection_example_g.csv";
     processFromFile(csvFilePath);
-	//find_opencv_version();
+	//::std::string csvFilePath = "./folders_linedetection_example_g.csv";
+	//processFromFileLineDetection(csvFilePath);
 	return 0;
 }
 
@@ -549,3 +552,156 @@ int find_opencv_version()
 
   return 0;
  }
+
+
+bool processFromFileLineDetection(::std::string csvFilePath, bool visualize)
+{
+    ParseOptions op = ParseOptions(csvFilePath);
+
+    ::std::string test_path;
+    ::std::vector< ::std::string> folder;
+    ::std::vector< float> numData;
+
+    bool pathOK = true;
+
+    if (op.getData(std::string("test_path"),folder))
+    {
+        test_path = folder[0];
+        std::cout << "Test path: " << test_path << std::endl;
+    }
+    else pathOK = false;
+
+    // One of the mandatory options (paths) is missing from the file
+    if (!pathOK)
+    {
+        std::cout << "Problem parsing base folder path from CSV file" << std::endl;
+        return 0; // TODO: raise exception ???
+    }
+
+
+    if (op.getData(std::string("visualize"),numData))
+    {
+        visualize = numData[0];
+    }
+
+    LineDetector lDetector;
+
+	testLineDetection(test_path, lDetector, visualize);
+    cv::waitKey(0);
+
+    return true;
+
+}
+
+
+bool testLineDetection(std::string path, LineDetector& lDetector, bool visualization, int delay, bool saveOutput)
+{
+
+	// video
+    ::cv::VideoWriter writer;
+    int codec = CV_FOURCC('M', 'P', 'E', 'G');  // select desired codec (must be available at runtime)
+    double fps = 25.0;                          // framerate of the created video stream
+    string filename = "./line_1.avi";             // name of the output video file
+    writer.open(filename, codec, fps, ::cv::Size(250, 250));
+    // check if we succeeded
+    if (!writer.isOpened()) {
+        cerr << "Could not open the output video file for write\n";
+        return -1;
+    }
+
+	// Variables declaration and initialization
+	::std::vector< ::std::string> imList;
+	int count = getImList(imList, checkPath(path + "/" ));
+	std::sort(imList.begin(), imList.end(), numeric_string_compare);
+
+
+	int img_index = 0;
+	
+	cv::Vec4f line;
+	cv::Vec2f centroid;
+
+	RecursiveFilter::RecursiveMovingAverage m_radius_filter;
+	RecursiveFilter::RecursiveMovingAverage m_theta_filter;
+	m_theta_filter.setDistance(&angularDistanceMinusPItoPI);
+
+	bool lineDetected = false;
+
+	::std::ofstream os("debug.txt");
+
+	while (img_index < count)
+	{
+		::cv::Mat img;
+
+		if (img_index > imList.size())
+			break;
+
+		std::string filepath = checkPath(path + "/" + imList[img_index]);
+		img = ::cv::imread(filepath);
+        
+		double r, theta;
+		lineDetected = lDetector.processImage(img, line, centroid);
+		if (lineDetected)
+		{
+			// adjust for the cropping
+			::Eigen::Vector2d centroidEig;
+			centroidEig(0) = centroid[0];
+			centroidEig(1) = centroid[1];
+
+			::Eigen::Vector2d tangentEig;
+			tangentEig[0] = line[0];
+			tangentEig[1] = line[1];
+			tangentEig.normalize();
+
+			::Eigen::Vector2d image_center((int) img.rows/2, (int) img.rows/2);
+
+			// bring to polar coordinated to perform filtering and then move back to point + tangent representation
+
+			::Eigen::VectorXd closest_point;
+			nearestPointToLine(image_center, centroidEig, tangentEig, closest_point);
+			cartesian2DPointToPolar(closest_point.segment(0, 2) - image_center, r, theta);
+
+			//os << r << " " << theta;
+
+			// filter
+			::std::cout << img_index << ", radius:" << r << ", theta:" << theta * 180/M_PI;
+			r = m_radius_filter.step(r);
+			theta = m_theta_filter.step(theta);
+
+			::std::cout << ", radius:" << r << ", theta:" << theta * 180/M_PI << ::std::endl;
+
+			//os << " " << r << " " << theta * 180/M_PI << " " << theta << ::std::endl;
+
+			//bring back to centroid-tangent
+			centroidEig(0) = r * cos(theta);
+			centroidEig(1) = r * sin(theta);
+
+			::Eigen::Vector2d filtered_tangent;
+			computePerpendicularVector(centroidEig, tangentEig);
+
+			centroidEig += image_center;
+
+
+			// -----------------------------//
+
+			// find closest point from center to line -> we will bring that point to the center of the images
+			double lambda = (image_center - centroidEig).transpose() * tangentEig;
+			centroidEig += lambda * tangentEig;
+
+			::cv::line( img, ::cv::Point(centroidEig(0), centroidEig(1)), ::cv::Point(centroidEig(0)+tangentEig(0)*100, centroidEig(1)+tangentEig(1)*100), ::cv::Scalar(0, 255, 0), 2, CV_AA);
+			::cv::line( img, ::cv::Point(centroidEig(0), centroidEig(1)), ::cv::Point(centroidEig(0)+tangentEig(0)*(-100), centroidEig(1)+tangentEig(1)*(-100)), ::cv::Scalar(0, 255, 0), 2, CV_AA);
+			::cv::circle(img, ::cv::Point(centroidEig[0], centroidEig[1]), 5, ::cv::Scalar(255,0,0));
+
+		}
+		::cv::imshow("test", img);
+		::cv::waitKey(10);
+		writer.write(img);
+		img_index++;
+
+
+
+
+	}
+	os.close();
+	writer.release();
+	return true;
+}
